@@ -72,7 +72,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
           
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-green-500/20 border-2 border-green-400 text-green-300 font-bold text-2xl rounded-2xl flex items-center justify-center shadow-inner">
-              #{student.shirtNumber || '--'}
+              #{student.shirtNumber || student.shirt_number || '--'}
             </div>
             <div>
               <div className="flex items-center space-x-3">
@@ -84,7 +84,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 </span>
               </div>
               <p className="text-green-200 text-sm mt-1">
-                {student.category} • {student.position} • Pé {student.dominantFoot}
+                {student.category} • {student.position} • Pé {student.dominantFoot || student.dominant_foot || 'Não informado'}
               </p>
             </div>
           </div>
@@ -110,8 +110,8 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 <InfoBox label="CPF do Atleta" value={student.cpf && student.cpf !== '00000000000' ? maskCPF(student.cpf) : 'Não informado'} />
                 <InfoBox label="Categoria" value={student.category} />
                 <InfoBox label="Posição em Campo" value={student.position} />
-                <InfoBox label="Pé Dominante" value={student.dominantFoot} />
-                <InfoBox label="Número da Camisa" value={`Camisa ${student.shirtNumber}`} />
+                <InfoBox label="Pé Dominante" value={student.dominantFoot || student.dominant_foot || 'Não informado'} />
+                <InfoBox label="Número da Camisa" value={student.shirtNumber || student.shirt_number ? `Camisa #${student.shirtNumber || student.shirt_number}` : 'Não informado'} />
               </div>
 
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 mt-4">

@@ -93,11 +93,15 @@ export class PaymentService {
         reference_year: refYear,
         studentName: p.students?.name || 'Atleta',
         category: p.students?.category || '',
+        shirt_number: p.students?.shirt_number,
+        shirtNumber: p.students?.shirt_number,
         students: {
           id: p.students?.id,
           name: p.students?.name || 'Atleta',
           cpf: p.students?.cpf || '',
-          category: p.students?.category || ''
+          category: p.students?.category || '',
+          shirt_number: p.students?.shirt_number,
+          shirtNumber: p.students?.shirt_number
         }
       };
     });

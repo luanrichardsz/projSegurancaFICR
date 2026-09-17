@@ -39,6 +39,7 @@ export class AttendanceService {
         id: s.id,
         name: s.name,
         shirtNumber: s.shirt_number,
+        shirt_number: s.shirt_number,
         category: s.category,
         status: attendanceMap.get(s.id) || 'PRESENTE' // Padrão PRESENTE para agilizar a chamada
       }));

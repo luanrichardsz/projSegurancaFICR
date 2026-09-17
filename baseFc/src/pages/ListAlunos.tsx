@@ -3,6 +3,7 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { Users, Search, UserPlus, FileText, CheckCircle2, XCircle, ShieldAlert, Filter, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { maskCPF } from '../utils/masks.ts';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
 import { EditStudentModal } from '../components/EditStudentModal.tsx';
 
@@ -68,9 +69,13 @@ export const ListAlunos = () => {
 
   const filteredAlunos = useMemo(() => {
     return alunos.filter(aluno => {
+      const shirtNum = String(aluno.shirt_number || aluno.shirtNumber || '');
+      const cleanTerm = searchTerm.trim().toLowerCase();
+      const shirtSearchTerm = cleanTerm.startsWith('#') ? cleanTerm.slice(1).trim() : cleanTerm;
       const matchesSearch = 
-        aluno.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (aluno.cpf && aluno.cpf.includes(searchTerm));
+        aluno.name.toLowerCase().includes(cleanTerm) ||
+        (aluno.cpf && aluno.cpf.includes(cleanTerm)) ||
+        (shirtSearchTerm && (shirtNum === shirtSearchTerm || shirtNum.includes(shirtSearchTerm)));
       
       const matchesStatus = statusFilter === 'TODOS' || aluno.status === statusFilter;
       const matchesCategory = categoryFilter === 'TODAS' || aluno.category === categoryFilter;
@@ -145,7 +150,7 @@ export const ListAlunos = () => {
               maxLength={100}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Buscar por nome ou CPF..." 
+              placeholder="Buscar por nome, CPF ou camisa (#10)..." 
               className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10 transition-all"
             />
           </div>
@@ -213,18 +218,31 @@ export const ListAlunos = () => {
                   <tr key={aluno.id} className="hover:bg-emerald-50/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#112F20] text-emerald-300 font-bold flex items-center justify-center text-sm shadow-xs">
-                          {aluno.name.charAt(0).toUpperCase()}
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-xl bg-[#112F20] text-emerald-300 font-bold flex items-center justify-center text-sm shadow-xs border border-emerald-800/60">
+                            {aluno.name.charAt(0).toUpperCase()}
+                          </div>
+                          {(aluno.shirt_number || aluno.shirtNumber) && (
+                            <span className="absolute -bottom-1.5 -right-1.5 bg-emerald-600 text-white text-3xs font-black px-1.5 py-0.2 rounded-full border-2 border-white shadow-xs">
+                              #{aluno.shirt_number || aluno.shirtNumber}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <div className="font-semibold text-gray-900">{aluno.name}</div>
-                          <div className="text-xs text-gray-500">CPF: {aluno.cpf || 'Não informado'}</div>
+                          <div className="text-xs text-gray-500">
+                            CPF: {aluno.cpf && aluno.cpf !== '00000000000' ? maskCPF(aluno.cpf) : 'Não informado'}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-800">{aluno.category || 'Geral'}</div>
-                      <div className="text-xs text-gray-500">Camisa #{aluno.jersey_number || 'S/N'}</div>
+                      <div className="text-sm font-semibold text-gray-800">{aluno.category || 'Geral'}</div>
+                      <div className="mt-1">
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 font-bold text-xs px-2 py-0.5 rounded-md border border-emerald-200">
+                          Camisa #{aluno.shirt_number || aluno.shirtNumber || 'S/N'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-800">{aluno.position || 'Não def.'}</div>

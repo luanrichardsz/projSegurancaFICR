@@ -27,11 +27,15 @@ interface Payment {
   notes?: string;
   studentName?: string;
   category?: string;
+  shirt_number?: number;
+  shirtNumber?: number;
   students?: {
     id: string;
     name: string;
     cpf?: string;
     category?: string;
+    shirt_number?: number;
+    shirtNumber?: number;
   };
 }
 
@@ -430,7 +434,14 @@ export const Mensalidades = () => {
                 {filteredPayments.map(p => (
                   <tr key={p.id} className="hover:bg-emerald-50/30 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">{p.students?.name || p.studentName || 'Atleta'}</div>
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
+                        <span>{p.students?.name || p.studentName || 'Atleta'}</span>
+                        {(p.students?.shirt_number || p.students?.shirtNumber || p.shirt_number || p.shirtNumber) && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-3xs font-black">
+                            #{p.students?.shirt_number || p.students?.shirtNumber || p.shirt_number || p.shirtNumber}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-2xs text-gray-500">
                         {p.students?.category || p.category || 'Geral'} • CPF: {p.students?.cpf && p.students.cpf !== '00000000000' ? maskCPF(p.students.cpf) : 'Não informado'}
                       </div>
@@ -722,7 +733,7 @@ export const Mensalidades = () => {
                   <option value="">Selecione um atleta...</option>
                   {students.map(s => (
                     <option key={s.id} value={s.id}>
-                      {s.name} - {s.category || 'Geral'} {s.status !== 'ATIVO' ? `(${s.status})` : ''}
+                      {s.name} (Camisa #{s.shirt_number || s.shirtNumber || 'S/N'}) - {s.category || 'Geral'} {s.status !== 'ATIVO' ? `(${s.status})` : ''}
                     </option>
                   ))}
                 </select>
