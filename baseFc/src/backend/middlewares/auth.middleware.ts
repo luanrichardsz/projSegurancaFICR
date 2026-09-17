@@ -43,7 +43,7 @@ export const requireAuth = async (
       uid: user.id,
       email: user.email,
       role: profile?.role || user.user_metadata?.role || 'RESPONSAVEL',
-      schoolId: profile?.school_id || user.user_metadata?.schoolId || null,
+      schoolId: profile?.school_id || user.user_metadata?.schoolId || '00000000-0000-0000-0000-000000000001',
       rawUser: user,
     };
 
