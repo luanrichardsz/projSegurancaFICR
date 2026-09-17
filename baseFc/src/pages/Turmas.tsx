@@ -5,10 +5,11 @@ import {
   Users, Calendar, Clock, MapPin, Plus, CheckCircle2, XCircle, 
   AlertCircle, ChevronRight, X, UserCheck, AlertTriangle,
   GraduationCap, Phone, Heart, Activity, UserMinus, Search,
-  ExternalLink, Sparkles, UserPlus, Shield, Check, Info
+  ExternalLink, Sparkles, UserPlus, Shield, Check, Info, Edit3
 } from 'lucide-react';
 import { maskPhone, maskCPF } from '../utils/masks.ts';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
+import { EditStudentModal } from '../components/EditStudentModal.tsx';
 
 interface Turma {
   id: string;
@@ -46,6 +47,7 @@ export const Turmas = () => {
   const [teacherErrorMsg, setTeacherErrorMsg] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [viewingProfileStudentId, setViewingProfileStudentId] = useState<string | null>(null);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
 
   // Other Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -941,14 +943,26 @@ export const Turmas = () => {
                               CPF: {aluno.cpf && aluno.cpf !== '00000000000' ? maskCPF(aluno.cpf) : 'Não informado'}
                             </span>
 
-                            <button
-                              type="button"
-                              onClick={() => setViewingProfileStudentId(aluno.id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#112F20] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              Ficha 360° Completa
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setEditingStudentId(aluno.id)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
+                                title="Editar informações do atleta"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                Editar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setViewingProfileStudentId(aluno.id)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-[#112F20] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                                Ficha 360° Completa
+                              </button>
+                            </div>
                           </div>
 
                         </div>
@@ -1288,6 +1302,21 @@ export const Turmas = () => {
         <StudentProfileModal
           studentId={viewingProfileStudentId}
           onClose={() => setViewingProfileStudentId(null)}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 5: EDITAR ALUNO (OVERLAY) */}
+      {/* ========================================================================= */}
+      {editingStudentId && (
+        <EditStudentModal
+          studentId={editingStudentId}
+          onClose={() => setEditingStudentId(null)}
+          onSaved={async () => {
+            if (selectedClassDetail) {
+              await handleOpenClassDetail(selectedClassDetail);
+            }
+          }}
         />
       )}
     </div>

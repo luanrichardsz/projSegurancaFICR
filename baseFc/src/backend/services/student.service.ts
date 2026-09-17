@@ -256,25 +256,118 @@ export class StudentService {
     if (updateData.phone !== undefined) dataToUpdate.phone = updateData.phone ? updateData.phone.replace(/\D/g, '') : null;
     if (updateData.address !== undefined) dataToUpdate.address = updateData.address ? updateData.address.trim() : null;
     if (updateData.allergies !== undefined) dataToUpdate.allergies = updateData.allergies ? updateData.allergies.trim() : null;
-    if (updateData.medicalRestrictions !== undefined) dataToUpdate.medical_restrictions = updateData.medicalRestrictions ? updateData.medicalRestrictions.trim() : null;
+
+    const medRestrictions = updateData.medicalRestrictions !== undefined ? updateData.medicalRestrictions : updateData.medical_restrictions;
+    if (medRestrictions !== undefined) dataToUpdate.medical_restrictions = medRestrictions ? medRestrictions.trim() : null;
+
     if (updateData.medications !== undefined) dataToUpdate.medications = updateData.medications ? updateData.medications.trim() : null;
     if (updateData.category) dataToUpdate.category = updateData.category;
     if (updateData.position) dataToUpdate.position = updateData.position;
-    if (updateData.dominantFoot) dataToUpdate.dominant_foot = updateData.dominantFoot;
-    if (updateData.shirtNumber) dataToUpdate.shirt_number = updateData.shirtNumber;
+
+    const domFoot = updateData.dominantFoot || updateData.dominant_foot;
+    if (domFoot) dataToUpdate.dominant_foot = domFoot;
+
+    const sNumber = updateData.shirtNumber !== undefined ? updateData.shirtNumber : updateData.shirt_number;
+    if (sNumber !== undefined) dataToUpdate.shirt_number = Number(sNumber);
+
     if (updateData.status) dataToUpdate.status = updateData.status;
 
-    const { data: updated, error } = await supabaseAdmin
-      .from('students')
-      .update(dataToUpdate)
-      .eq('id', studentId)
-      .eq('school_id', schoolId)
-      .select()
-      .single();
+    let updated = null;
+    if (Object.keys(dataToUpdate).length > 0) {
+      const { data, error } = await supabaseAdmin
+        .from('students')
+        .update(dataToUpdate)
+        .eq('id', studentId)
+        .eq('school_id', schoolId)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Erro ao atualizar aluno:', error);
-      throw new Error(`Falha ao atualizar aluno: ${error.message}`);
+      if (error) {
+        console.error('Erro ao atualizar aluno:', error);
+        throw new Error(`Falha ao atualizar aluno: ${error.message}`);
+      }
+      updated = data;
+    } else {
+      const { data } = await supabaseAdmin
+        .from('students')
+        .select('*')
+        .eq('id', studentId)
+        .single();
+      updated = data;
+    }
+
+    // Atualizar Responsável se fornecido
+    if (updateData.guardian && updateData.guardian.name) {
+      const cleanGuardianCpf = updateData.guardian.cpf ? updateData.guardian.cpf.replace(/\D/g, '') : null;
+      const cleanGuardianPhone = updateData.guardian.phone ? updateData.guardian.phone.replace(/\D/g, '') : '';
+
+      const { data: existingLink } = await supabaseAdmin
+        .from('guardian_students')
+        .select('guardian_id')
+        .eq('student_id', studentId)
+        .maybeSingle();
+
+      if (existingLink?.guardian_id) {
+        await supabaseAdmin
+          .from('guardians')
+          .update({
+            name: updateData.guardian.name.trim(),
+            cpf: cleanGuardianCpf || null,
+            phone: cleanGuardianPhone
+          })
+          .eq('id', existingLink.guardian_id);
+      } else {
+        const { data: newGuardian } = await supabaseAdmin
+          .from('guardians')
+          .insert([{
+            school_id: schoolId,
+            name: updateData.guardian.name.trim(),
+            cpf: cleanGuardianCpf || null,
+            phone: cleanGuardianPhone
+          }])
+          .select()
+          .single();
+
+        if (newGuardian) {
+          await supabaseAdmin.from('guardian_students').insert([{
+            guardian_id: newGuardian.id,
+            student_id: studentId
+          }]);
+        }
+      }
+    }
+
+    // Atualizar Contato de Emergência se fornecido
+    if (updateData.emergencyContact && updateData.emergencyContact.name) {
+      const cleanEmergPhone = updateData.emergencyContact.phone ? updateData.emergencyContact.phone.replace(/\D/g, '') : '';
+      const { data: existingEmerg } = await supabaseAdmin
+        .from('emergency_contacts')
+        .select('id')
+        .eq('student_id', studentId)
+        .maybeSingle();
+
+      if (existingEmerg?.id) {
+        await supabaseAdmin
+          .from('emergency_contacts')
+          .update({
+            name: updateData.emergencyContact.name.trim(),
+            relationship: updateData.emergencyContact.relationship || 'Responsável',
+            phone: cleanEmergPhone,
+            authorized_pickup: updateData.emergencyContact.authorizedPickup ?? true,
+            notes: updateData.emergencyContact.notes ? updateData.emergencyContact.notes.trim() : null
+          })
+          .eq('id', existingEmerg.id);
+      } else {
+        await supabaseAdmin.from('emergency_contacts').insert([{
+          student_id: studentId,
+          name: updateData.emergencyContact.name.trim(),
+          relationship: updateData.emergencyContact.relationship || 'Responsável',
+          phone: cleanEmergPhone,
+          is_main: true,
+          authorized_pickup: updateData.emergencyContact.authorizedPickup ?? true,
+          notes: updateData.emergencyContact.notes ? updateData.emergencyContact.notes.trim() : null
+        }]);
+      }
     }
 
     // Auditoria
@@ -282,7 +375,7 @@ export class StudentService {
       school_id: schoolId,
       user_id: userId,
       action: 'ATUALIZAR_ALUNO',
-      resource: `Aluno: ${updated.name}`,
+      resource: `Aluno: ${updated?.name || studentId}`,
       details: { studentId, changes: dataToUpdate }
     }]);
 

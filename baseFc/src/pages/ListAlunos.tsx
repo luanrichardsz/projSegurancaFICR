@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { Users, Search, UserPlus, FileText, CheckCircle2, XCircle, ShieldAlert, Filter } from 'lucide-react';
+import { Users, Search, UserPlus, FileText, CheckCircle2, XCircle, ShieldAlert, Filter, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
+import { EditStudentModal } from '../components/EditStudentModal.tsx';
 
 export const ListAlunos = () => {
   const { token, role } = useAuth();
@@ -13,6 +14,7 @@ export const ListAlunos = () => {
   const [statusFilter, setStatusFilter] = useState('TODOS');
   const [categoryFilter, setCategoryFilter] = useState('TODAS');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -246,11 +248,20 @@ export const ListAlunos = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setSelectedStudentId(aluno.id)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer"
                           title="Visualizar Ficha Completa 360°"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           Ficha 360°
+                        </button>
+
+                        <button
+                          onClick={() => setEditingStudentId(aluno.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
+                          title="Editar informações do atleta"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          Editar
                         </button>
 
                         {role === 'GESTOR' && (
@@ -288,6 +299,17 @@ export const ListAlunos = () => {
         <StudentProfileModal 
           studentId={selectedStudentId} 
           onClose={() => setSelectedStudentId(null)} 
+        />
+      )}
+
+      {/* Editar Informações do Aluno Modal */}
+      {editingStudentId && (
+        <EditStudentModal
+          studentId={editingStudentId}
+          onClose={() => setEditingStudentId(null)}
+          onSaved={() => {
+            loadAlunos();
+          }}
         />
       )}
     </div>
