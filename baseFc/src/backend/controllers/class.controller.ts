@@ -45,10 +45,13 @@ export class ClassController {
       const validatedData = createClassSchema.parse(req.body);
       const newClass = await classService.createClass(schoolId, validatedData, req.user!.uid);
       return res.status(201).json(newClass);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
         const firstError = error.issues?.[0]?.message || 'Dados inválidos';
         return res.status(400).json({ error: firstError, details: error.issues });
+      }
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ error: error.message });
       }
       next(error);
     }
@@ -63,10 +66,13 @@ export class ClassController {
       const validatedData = updateClassSchema.parse(req.body);
       const updatedClass = await classService.updateClass(classId, schoolId, validatedData, req.user!.uid);
       return res.json(updatedClass);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof ZodError) {
         const firstError = error.issues?.[0]?.message || 'Dados inválidos';
         return res.status(400).json({ error: firstError, details: error.issues });
+      }
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ error: error.message });
       }
       next(error);
     }

@@ -159,11 +159,86 @@ export class ClassService {
     };
   }
 
+  async checkTeacherScheduleConflict(
+    schoolId: string,
+    teacherId: string,
+    daysOfWeek: string[],
+    startTime: string,
+    endTime: string,
+    excludeClassId?: string
+  ) {
+    if (!teacherId || !daysOfWeek || daysOfWeek.length === 0 || !startTime || !endTime) {
+      return null;
+    }
+
+    const newStart = startTime.slice(0, 5);
+    const newEnd = endTime.slice(0, 5);
+
+    if (newStart >= newEnd) {
+      const err: any = new Error('O horário de término deve ser posterior ao horário de início.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    let query = supabaseAdmin
+      .from('classes')
+      .select('id, name, days_of_week, start_time, end_time, status')
+      .eq('school_id', schoolId)
+      .eq('teacher_id', teacherId)
+      .neq('status', 'INATIVO');
+
+    if (excludeClassId) {
+      query = query.neq('id', excludeClassId);
+    }
+
+    const { data: teacherClasses, error } = await query;
+
+    if (error) {
+      console.error('Erro ao verificar agenda do professor:', error);
+      throw new Error('Falha ao verificar horários do professor');
+    }
+
+    if (!teacherClasses || teacherClasses.length === 0) {
+      return null;
+    }
+
+    for (const existing of teacherClasses) {
+      const existingDays: string[] = existing.days_of_week || [];
+      const commonDays = daysOfWeek.filter(day => existingDays.includes(day));
+
+      if (commonDays.length > 0) {
+        const existStart = (existing.start_time || '').slice(0, 5);
+        const existEnd = (existing.end_time || '').slice(0, 5);
+
+        // Sobreposição de intervalos: newStart < existEnd && existStart < newEnd
+        const isOverlapping = (newStart < existEnd) && (existStart < newEnd);
+
+        if (isOverlapping) {
+          const { data: teacherData } = await supabaseAdmin
+            .from('teachers')
+            .select('name')
+            .eq('id', teacherId)
+            .single();
+          const teacherName = teacherData?.name ? `O professor ${teacherData.name}` : 'O professor';
+
+          const err: any = new Error(
+            `Conflito de agenda: ${teacherName} já possui aula na turma "${existing.name}" ` +
+            `nos dias [${commonDays.join(', ')}] das ${existStart} às ${existEnd}.`
+          );
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+    }
+
+    return null;
+  }
+
   async updateClass(classId: string, schoolId: string, data: any, updatedBy: string) {
     // 1. Verificar se a turma pertence à escola
     const { data: existingClass, error: findError } = await supabaseAdmin
       .from('classes')
-      .select('id, name, school_id, teacher_id')
+      .select('id, name, school_id, teacher_id, days_of_week, start_time, end_time')
       .eq('id', classId)
       .single();
 
@@ -195,6 +270,23 @@ export class ClassService {
     if (data.capacity !== undefined) updateRecord.capacity = Number(data.capacity);
     if (data.status !== undefined) updateRecord.status = data.status;
 
+    // 3. Validar se há conflito de agenda do professor para esta turma
+    const effectiveTeacherId = updateRecord.teacher_id !== undefined ? updateRecord.teacher_id : existingClass.teacher_id;
+    const effectiveDays = updateRecord.days_of_week !== undefined ? updateRecord.days_of_week : existingClass.days_of_week;
+    const effectiveStart = updateRecord.start_time !== undefined ? updateRecord.start_time : existingClass.start_time;
+    const effectiveEnd = updateRecord.end_time !== undefined ? updateRecord.end_time : existingClass.end_time;
+
+    if (effectiveTeacherId) {
+      await this.checkTeacherScheduleConflict(
+        schoolId,
+        effectiveTeacherId,
+        effectiveDays,
+        effectiveStart,
+        effectiveEnd,
+        classId
+      );
+    }
+
     const { data: updatedClass, error: updateError } = await supabaseAdmin
       .from('classes')
       .update(updateRecord)
@@ -216,7 +308,7 @@ export class ClassService {
       throw new Error(`Falha ao atualizar turma: ${updateError?.message}`);
     }
 
-    // 3. Auditoria (Integridade e Rastreabilidade CID)
+    // 4. Auditoria (Integridade e Rastreabilidade CID)
     await supabaseAdmin.from('audit_logs').insert([{
       school_id: schoolId,
       user_id: updatedBy,
@@ -260,6 +352,17 @@ export class ClassService {
       capacity: Number(data.capacity) || 25,
       status: data.status || 'ATIVO'
     };
+
+    // Validar conflito de agenda do professor antes de criar a turma
+    if (classRecord.teacher_id) {
+      await this.checkTeacherScheduleConflict(
+        schoolId,
+        classRecord.teacher_id,
+        classRecord.days_of_week,
+        classRecord.start_time,
+        classRecord.end_time
+      );
+    }
 
     const { data: newClass, error } = await supabaseAdmin
       .from('classes')

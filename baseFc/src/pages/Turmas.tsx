@@ -43,6 +43,7 @@ export const Turmas = () => {
   const [detailTeacherId, setDetailTeacherId] = useState('');
   const [savingTeacher, setSavingTeacher] = useState(false);
   const [teacherSuccessMsg, setTeacherSuccessMsg] = useState('');
+  const [teacherErrorMsg, setTeacherErrorMsg] = useState('');
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [viewingProfileStudentId, setViewingProfileStudentId] = useState<string | null>(null);
 
@@ -106,6 +107,7 @@ export const Turmas = () => {
       setDetailLoading(true);
       setEnrollError('');
       setTeacherSuccessMsg('');
+      setTeacherErrorMsg('');
       setStudentSearchTerm('');
 
       const [fullClass, allStudents] = await Promise.all([
@@ -139,6 +141,7 @@ export const Turmas = () => {
     try {
       setSavingTeacher(true);
       setTeacherSuccessMsg('');
+      setTeacherErrorMsg('');
 
       await fetchApi(`/classes/${selectedClassDetail.id}`, {
         method: 'PUT',
@@ -158,7 +161,7 @@ export const Turmas = () => {
         setTeacherSuccessMsg('');
       }, 3500);
     } catch (err: any) {
-      alert(`Erro ao definir professor: ${err.message}`);
+      setTeacherErrorMsg(err.message || 'Erro ao definir professor.');
     } finally {
       setSavingTeacher(false);
     }
@@ -664,6 +667,13 @@ export const Turmas = () => {
                   <div className="mt-3 p-2.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-semibold rounded-xl flex items-center gap-2 animate-in fade-in">
                     <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>{teacherSuccessMsg}</span>
+                  </div>
+                )}
+
+                {teacherErrorMsg && (
+                  <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-start gap-2.5 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <span>{teacherErrorMsg}</span>
                   </div>
                 )}
               </div>
