@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
@@ -72,7 +72,7 @@ export const Turmas = () => {
   // Attendance form state
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [classStudents, setClassStudents] = useState<any[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, 'PRESENTE' | 'FALTA' | 'FALTA_JUSTIFICADA'>>({});
+  const [attendanceRecords, setAttendanceRecords] = useState<Record<string, 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO'>>({});
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendanceSuccess, setAttendanceSuccess] = useState(false);
 
@@ -251,43 +251,80 @@ export const Turmas = () => {
     }
   };
 
+  // Fetch Class Attendance for specific date
+  const fetchClassAttendance = async (turmaId: string, dateStr: string) => {
+    try {
+      setAttendanceLoading(true);
+      const data = await fetchApi(`/attendance/class/${turmaId}?date=${dateStr}`, {}, token);
+      const studentsList = data?.students || [];
+      setClassStudents(studentsList);
+
+      const recordsMap: Record<string, 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO'> = {};
+      studentsList.forEach((s: any) => {
+        recordsMap[s.id] = (s.status as 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO') || 'PRESENTE';
+      });
+      setAttendanceRecords(recordsMap);
+    } catch (err: any) {
+      console.error('Erro ao carregar chamada:', err);
+      try {
+        const fallbackStudents = await fetchApi(`/classes/${turmaId}/students`, {}, token);
+        setClassStudents(fallbackStudents || []);
+        const initialMap: Record<string, 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO'> = {};
+        (fallbackStudents || []).forEach((s: any) => {
+          initialMap[s.id] = 'PRESENTE';
+        });
+        setAttendanceRecords(initialMap);
+      } catch (fallbackErr) {
+        console.error('Erro no fallback de alunos:', fallbackErr);
+      }
+    } finally {
+      setAttendanceLoading(false);
+    }
+  };
+
   // Handle Attendance Open
   const handleOpenAttendance = async (turma: Turma) => {
     setShowAttendanceModal(turma);
     setAttendanceSuccess(false);
-    try {
-      setAttendanceLoading(true);
-      const students = await fetchApi(`/classes/${turma.id}/students`, {}, token);
-      setClassStudents(students || []);
-      
-      const initialMap: Record<string, 'PRESENTE' | 'FALTA' | 'FALTA_JUSTIFICADA'> = {};
-      (students || []).forEach((s: any) => {
-        initialMap[s.id] = 'PRESENTE';
-      });
-      setAttendanceRecords(initialMap);
-    } catch (err) {
-      console.error('Erro ao carregar alunos da turma', err);
-    } finally {
-      setAttendanceLoading(false);
+    await fetchClassAttendance(turma.id, attendanceDate);
+  };
+
+  // Handle Date Change inside Modal
+  const handleAttendanceDateChange = async (newDate: string) => {
+    setAttendanceDate(newDate);
+    if (showAttendanceModal) {
+      await fetchClassAttendance(showAttendanceModal.id, newDate);
     }
+  };
+
+  // Quick action: Mark all as present
+  const handleMarkAllPresent = () => {
+    const newMap: Record<string, 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO'> = {};
+    classStudents.forEach(s => {
+      newMap[s.id] = 'PRESENTE';
+    });
+    setAttendanceRecords(newMap);
   };
 
   const handleSaveAttendance = async () => {
     if (!showAttendanceModal) return;
     try {
       setAttendanceLoading(true);
-      const records = Object.entries(attendanceRecords).map(([student_id, status]) => ({
-        student_id,
-        status,
-        notes: ''
+      const attendees = Object.entries(attendanceRecords).map(([studentId, status]) => ({
+        studentId,
+        student_id: studentId,
+        status
       }));
 
       await fetchApi('/attendance', {
         method: 'POST',
         body: JSON.stringify({
+          classId: showAttendanceModal.id,
           class_id: showAttendanceModal.id,
+          date: attendanceDate,
           session_date: attendanceDate,
-          records
+          attendees,
+          records: attendees
         })
       }, token);
 
@@ -297,7 +334,7 @@ export const Turmas = () => {
         setAttendanceSuccess(false);
       }, 1200);
     } catch (err: any) {
-      alert(`Erro ao salvar lista de presença: ${err.message}`);
+      alert(`Erro ao salvar lista de presença: ${err.message || 'Dados inválidos'}`);
     } finally {
       setAttendanceLoading(false);
     }
@@ -401,6 +438,16 @@ export const Turmas = () => {
     const guardianMatch = s.primaryGuardian?.name?.toLowerCase().includes(term);
     return nameMatch || shirtMatch || positionMatch || guardianMatch;
   });
+
+  const attendanceCounts = useMemo(() => {
+    let pres = 0, aus = 0, just = 0;
+    Object.values(attendanceRecords).forEach(st => {
+      if (st === 'PRESENTE') pres++;
+      else if (st === 'AUSENTE') aus++;
+      else if (st === 'JUSTIFICADO') just++;
+    });
+    return { pres, aus, just, total: classStudents.length };
+  }, [attendanceRecords, classStudents]);
 
   return (
     <div className="space-y-6">
@@ -1102,17 +1149,35 @@ export const Turmas = () => {
               </button>
             </div>
 
-            <div className="p-6 border-b border-gray-100 bg-emerald-50/40 flex items-center justify-between">
-              <label className="text-xs font-bold text-gray-700 flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-emerald-700" />
-                Data da Sessão / Treino:
-              </label>
-              <input 
-                type="date"
-                value={attendanceDate}
-                onChange={e => setAttendanceDate(e.target.value)}
-                className="text-xs font-medium bg-white border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-600"
-              />
+            <div className="p-4 border-b border-gray-100 bg-emerald-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-emerald-700" />
+                  Data do Treino:
+                </label>
+                <input 
+                  type="date"
+                  value={attendanceDate}
+                  onChange={e => handleAttendanceDateChange(e.target.value)}
+                  className="text-xs font-semibold bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-2xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleMarkAllPresent}
+                  disabled={classStudents.length === 0}
+                  className="text-2xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200/80 px-2.5 py-1.5 rounded-lg border border-emerald-300/60 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  ✓ Todos Presentes
+                </button>
+                <div className="flex items-center gap-1 text-2xs font-bold">
+                  <span className="px-2 py-1 rounded-md bg-emerald-600 text-white shadow-2xs">{attendanceCounts.pres} Pres.</span>
+                  <span className="px-2 py-1 rounded-md bg-red-600 text-white shadow-2xs">{attendanceCounts.aus} Faltas</span>
+                  <span className="px-2 py-1 rounded-md bg-amber-500 text-white shadow-2xs">{attendanceCounts.just} Just.</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-3">
@@ -1134,12 +1199,21 @@ export const Turmas = () => {
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100/70 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[#112F20] text-white text-xs font-bold flex items-center justify-center">
-                          {aluno.name?.charAt(0)}
+                        <div className="relative">
+                          <div className="w-9 h-9 rounded-xl bg-[#112F20] text-emerald-300 font-bold flex items-center justify-center text-xs shadow-xs border border-emerald-800/60">
+                            {aluno.name?.charAt(0).toUpperCase()}
+                          </div>
+                          {(aluno.shirt_number || aluno.shirtNumber) && (
+                            <span className="absolute -bottom-1 -right-1 bg-emerald-600 text-white text-3xs font-black px-1 py-0.1 rounded-full border border-white">
+                              #{aluno.shirt_number || aluno.shirtNumber}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-gray-900">{aluno.name}</p>
-                          <p className="text-2xs text-gray-500">Camisa #{aluno.shirt_number || aluno.shirtNumber || 'S/N'}</p>
+                          <p className="text-2xs text-gray-500">
+                            Camisa #{aluno.shirt_number || aluno.shirtNumber || 'S/N'} • {aluno.category || 'Geral'}
+                          </p>
                         </div>
                       </div>
 
@@ -1147,7 +1221,7 @@ export const Turmas = () => {
                         <button
                           type="button"
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'PRESENTE' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all ${
+                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
                             status === 'PRESENTE'
                               ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
@@ -1157,9 +1231,9 @@ export const Turmas = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'FALTA' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all ${
-                            status === 'FALTA'
+                          onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'AUSENTE' }))}
+                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
+                            status === 'AUSENTE'
                               ? 'bg-red-600 text-white border-red-600 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
                           }`}
@@ -1168,9 +1242,9 @@ export const Turmas = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'FALTA_JUSTIFICADA' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all ${
-                            status === 'FALTA_JUSTIFICADA'
+                          onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'JUSTIFICADO' }))}
+                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
+                            status === 'JUSTIFICADO'
                               ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
                           }`}

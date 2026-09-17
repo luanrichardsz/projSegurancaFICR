@@ -10,7 +10,7 @@ export class AttendanceController {
       const classId = Array.isArray(req.params.classId) ? req.params.classId[0] : req.params.classId;
       const date = (req.query.date as string) || new Date().toISOString().split('T')[0];
 
-      const result = await attendanceService.getClassAttendance(classId, date);
+      const result = await attendanceService.getClassAttendance(classId, date, req.user?.schoolId);
       return res.json(result);
     } catch (error) {
       next(error);
