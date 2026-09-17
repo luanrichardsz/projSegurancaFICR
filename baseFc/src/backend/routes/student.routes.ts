@@ -9,8 +9,18 @@ const router = Router();
 // Aplica autenticação em todas as rotas de alunos
 router.use(requireAuth);
 
+// Gestores e Professores podem listar
+router.get('/', requireRole(['GESTOR', 'PROFESSOR']), studentController.list);
+
+// Apenas Gestor pode cadastrar
 router.post('/', requireRole(['GESTOR']), studentController.create);
-router.get('/', requireRole(['GESTOR']), studentController.list);
+
+// Obter detalhes e perfil 360 com proteção IDOR (Gestor, Professor da turma, ou Responsável do aluno)
 router.get('/:id', checkStudentAccess, studentController.getOne);
+router.get('/:id/profile', checkStudentAccess, studentController.getProfile);
+
+// Apenas Gestor pode atualizar ou excluir
+router.put('/:id', requireRole(['GESTOR']), studentController.update);
+router.delete('/:id', requireRole(['GESTOR']), studentController.delete);
 
 export default router;

@@ -9,6 +9,12 @@ import { createServer as createViteServer } from 'vite';
 
 import { errorHandler } from './src/backend/middlewares/error.middleware.ts';
 import studentRoutes from './src/backend/routes/student.routes.ts';
+import teacherRoutes from './src/backend/routes/teacher.routes.ts';
+import classRoutes from './src/backend/routes/class.routes.ts';
+import attendanceRoutes from './src/backend/routes/attendance.routes.ts';
+import paymentRoutes from './src/backend/routes/payment.routes.ts';
+import dashboardRoutes from './src/backend/routes/dashboard.routes.ts';
+import auditRoutes from './src/backend/routes/audit.routes.ts';
 
 async function startServer() {
   const app = express();
@@ -43,6 +49,12 @@ async function startServer() {
   // Rotas da API
   app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'Base FC API', timestamp: new Date() }));
   app.use('/api/students', studentRoutes);
+  app.use('/api/teachers', teacherRoutes);
+  app.use('/api/classes', classRoutes);
+  app.use('/api/attendance', attendanceRoutes);
+  app.use('/api/payments', paymentRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/audit-logs', auditRoutes);
 
   // Middleware Global de Tratamento de Erros
   app.use(errorHandler);
