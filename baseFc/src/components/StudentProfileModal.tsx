@@ -5,6 +5,7 @@ import {
   X, User, ShieldCheck, Heart, CalendarCheck, CreditCard, 
   Phone, AlertTriangle, CheckCircle2, XCircle, Clock
 } from 'lucide-react';
+import { maskCPF, maskPhone } from '../utils/masks.ts';
 
 interface Props {
   studentId: string;
@@ -106,7 +107,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <InfoBox label="Data de Nascimento" value={student.dob || 'Não informada'} />
-                <InfoBox label="CPF do Atleta" value={student.cpf || 'Não informado'} />
+                <InfoBox label="CPF do Atleta" value={student.cpf && student.cpf !== '00000000000' ? maskCPF(student.cpf) : 'Não informado'} />
                 <InfoBox label="Categoria" value={student.category} />
                 <InfoBox label="Posição em Campo" value={student.position} />
                 <InfoBox label="Pé Dominante" value={student.dominantFoot} />
@@ -139,11 +140,11 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                   <div key={g.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
                     <div>
                       <div className="font-bold text-gray-900 text-base">{g.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">CPF: {g.cpf || 'Não informado'}</div>
+                      <div className="text-xs text-gray-500 mt-1">CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
                     </div>
                     <div className="text-right">
                       <a href={`tel:${g.phone}`} className="inline-flex items-center text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                        <Phone className="w-4 h-4 mr-1.5" /> {g.phone}
+                        <Phone className="w-4 h-4 mr-1.5" /> {g.phone ? maskPhone(g.phone) : 'Sem telefone'}
                       </a>
                     </div>
                   </div>
@@ -170,7 +171,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                             <span className="font-bold text-gray-900">{c.name}</span>
                             <span className="text-xs text-gray-500">({c.relationship})</span>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">Contato: {c.phone}</div>
+                          <div className="text-xs text-gray-500 mt-1">Contato: {c.phone ? maskPhone(c.phone) : 'Não informado'}</div>
                           {c.notes && (
                             <div className="text-xs text-amber-700 mt-1 font-medium bg-amber-50 px-2 py-0.5 rounded-sm inline-block">
                               Obs: {c.notes}

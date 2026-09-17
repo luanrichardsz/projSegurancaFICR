@@ -3,11 +3,17 @@ import { supabaseAdmin } from '../config/supabase.ts';
 export class StudentService {
   async createStudent(schoolId: string, studentData: any, createdBy: string) {
     // 1. Inserir Aluno
+    const cleanStudentCpf = (studentData.cpf && studentData.cpf.trim()) ? studentData.cpf.replace(/\D/g, '') : '00000000000';
     const studentRecord = {
       school_id: schoolId,
-      name: studentData.name,
-      cpf: (studentData.cpf && studentData.cpf.trim()) ? studentData.cpf.replace(/\D/g, '') : '00000000000',
+      name: studentData.name.trim(),
+      cpf: cleanStudentCpf,
       dob: studentData.dob,
+      phone: studentData.phone ? studentData.phone.replace(/\D/g, '') : null,
+      address: studentData.address ? studentData.address.trim() : null,
+      allergies: studentData.allergies ? studentData.allergies.trim() : null,
+      medical_restrictions: studentData.medicalRestrictions ? studentData.medicalRestrictions.trim() : null,
+      medications: studentData.medications ? studentData.medications.trim() : null,
       category: studentData.category,
       position: studentData.position,
       dominant_foot: studentData.dominantFoot,
@@ -29,13 +35,15 @@ export class StudentService {
 
     // 2. Inserir Responsável (se fornecido)
     if (studentData.guardian && studentData.guardian.name) {
+      const cleanGuardianCpf = studentData.guardian.cpf ? studentData.guardian.cpf.replace(/\D/g, '') : null;
+      const cleanGuardianPhone = studentData.guardian.phone ? studentData.guardian.phone.replace(/\D/g, '') : '';
       const { data: newGuardian } = await supabaseAdmin
         .from('guardians')
         .insert([{
           school_id: schoolId,
-          name: studentData.guardian.name,
-          cpf: studentData.guardian.cpf || null,
-          phone: studentData.guardian.phone,
+          name: studentData.guardian.name.trim(),
+          cpf: cleanGuardianCpf || null,
+          phone: cleanGuardianPhone,
         }])
         .select()
         .single();
@@ -50,14 +58,15 @@ export class StudentService {
 
     // 3. Inserir Contato de Emergência (se fornecido)
     if (studentData.emergencyContact && studentData.emergencyContact.name) {
+      const cleanEmergPhone = studentData.emergencyContact.phone ? studentData.emergencyContact.phone.replace(/\D/g, '') : '';
       await supabaseAdmin.from('emergency_contacts').insert([{
         student_id: newStudent.id,
-        name: studentData.emergencyContact.name,
+        name: studentData.emergencyContact.name.trim(),
         relationship: studentData.emergencyContact.relationship || 'Responsável',
-        phone: studentData.emergencyContact.phone,
+        phone: cleanEmergPhone,
         is_main: true,
         authorized_pickup: studentData.emergencyContact.authorizedPickup ?? true,
-        notes: studentData.emergencyContact.notes || null
+        notes: studentData.emergencyContact.notes ? studentData.emergencyContact.notes.trim() : null
       }]);
     }
 
@@ -241,9 +250,14 @@ export class StudentService {
 
   async updateStudent(studentId: string, schoolId: string, updateData: any, userId: string) {
     const dataToUpdate: any = {};
-    if (updateData.name) dataToUpdate.name = updateData.name;
-    if (updateData.cpf !== undefined) dataToUpdate.cpf = updateData.cpf || null;
+    if (updateData.name) dataToUpdate.name = updateData.name.trim();
+    if (updateData.cpf !== undefined) dataToUpdate.cpf = updateData.cpf ? updateData.cpf.replace(/\D/g, '') : null;
     if (updateData.dob) dataToUpdate.dob = updateData.dob;
+    if (updateData.phone !== undefined) dataToUpdate.phone = updateData.phone ? updateData.phone.replace(/\D/g, '') : null;
+    if (updateData.address !== undefined) dataToUpdate.address = updateData.address ? updateData.address.trim() : null;
+    if (updateData.allergies !== undefined) dataToUpdate.allergies = updateData.allergies ? updateData.allergies.trim() : null;
+    if (updateData.medicalRestrictions !== undefined) dataToUpdate.medical_restrictions = updateData.medicalRestrictions ? updateData.medicalRestrictions.trim() : null;
+    if (updateData.medications !== undefined) dataToUpdate.medications = updateData.medications ? updateData.medications.trim() : null;
     if (updateData.category) dataToUpdate.category = updateData.category;
     if (updateData.position) dataToUpdate.position = updateData.position;
     if (updateData.dominantFoot) dataToUpdate.dominant_foot = updateData.dominantFoot;

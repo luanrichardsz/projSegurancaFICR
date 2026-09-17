@@ -296,6 +296,7 @@ export const Mensalidades = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
+              maxLength={100}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Buscar por atleta ou CPF..." 
@@ -493,6 +494,7 @@ export const Mensalidades = () => {
                 <label className="block text-xs font-bold text-gray-700 mb-1">Observações (Opcional)</label>
                 <textarea
                   rows={2}
+                  maxLength={250}
                   placeholder="Ex: Comprovante enviado via WhatsApp pelo responsável"
                   value={payForm.notes}
                   onChange={e => setPayForm(prev => ({ ...prev, notes: e.target.value }))}
@@ -563,6 +565,9 @@ export const Mensalidades = () => {
                   <label className="block text-xs font-bold text-gray-700 mb-1">Ano *</label>
                   <input 
                     type="number"
+                    required
+                    min={2020}
+                    max={2050}
                     value={batchForm.reference_year}
                     onChange={e => setBatchForm(prev => ({ ...prev, reference_year: Number(e.target.value) }))}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
@@ -587,6 +592,8 @@ export const Mensalidades = () => {
                   type="number"
                   step="0.01"
                   required
+                  min={1}
+                  max={99999}
                   value={batchForm.default_amount}
                   onChange={e => setBatchForm(prev => ({ ...prev, default_amount: Number(e.target.value) }))}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
@@ -661,6 +668,9 @@ export const Mensalidades = () => {
                   <label className="block text-xs font-bold text-gray-700 mb-1">Ano *</label>
                   <input 
                     type="number"
+                    required
+                    min={2020}
+                    max={2050}
                     value={singleForm.reference_year}
                     onChange={e => setSingleForm(prev => ({ ...prev, reference_year: Number(e.target.value) }))}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
@@ -675,6 +685,8 @@ export const Mensalidades = () => {
                     type="number"
                     step="0.01"
                     required
+                    min={1}
+                    max={99999}
                     value={singleForm.amount}
                     onChange={e => setSingleForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"

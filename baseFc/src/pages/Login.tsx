@@ -53,6 +53,7 @@ export const Login = () => {
             <input
               type="email"
               required
+              maxLength={100}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -64,6 +65,7 @@ export const Login = () => {
             <input
               type="password"
               required
+              maxLength={64}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

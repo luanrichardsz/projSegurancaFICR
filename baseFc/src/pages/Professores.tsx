@@ -5,6 +5,7 @@ import {
   UserCheck, Plus, Mail, Phone, Award, Shield, 
   Trash2, X, AlertCircle, CheckCircle2, Search
 } from 'lucide-react';
+import { maskPhone, unmask, isValidPhone } from '../utils/masks.ts';
 
 interface Teacher {
   id: string;
@@ -53,9 +54,22 @@ export const Professores = () => {
 
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+
+    if (newTeacher.name.trim().length < 3) {
+      setFormError('O nome do professor deve ter no mínimo 3 caracteres.');
+      return;
+    }
+
+    if (newTeacher.phone && unmask(newTeacher.phone).length > 0) {
+      if (!isValidPhone(newTeacher.phone)) {
+        setFormError('O telefone deve conter DDD + 8 ou 9 dígitos válidos.');
+        return;
+      }
+    }
+
     try {
       setFormLoading(true);
-      setFormError('');
       
       const specialtiesArray = newTeacher.specialties
         .split(',')
@@ -65,10 +79,10 @@ export const Professores = () => {
       await fetchApi('/teachers', {
         method: 'POST',
         body: JSON.stringify({
-          name: newTeacher.name,
-          email: newTeacher.email,
-          phone: newTeacher.phone,
-          cref: newTeacher.cref,
+          name: newTeacher.name.trim(),
+          email: newTeacher.email.trim().toLowerCase(),
+          phone: unmask(newTeacher.phone) || undefined,
+          cref: newTeacher.cref.trim().toUpperCase() || undefined,
           specialties: specialtiesArray
         })
       }, token);
@@ -125,11 +139,12 @@ export const Professores = () => {
         )}
       </div>
 
-      {/* Search */}
+      {/* Search with length limit */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center gap-3">
         <Search className="w-4 h-4 text-gray-400" />
         <input 
           type="text"
+          maxLength={100}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Buscar professor por nome, e-mail ou CREF..."
@@ -190,7 +205,7 @@ export const Professores = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>{teacher.phone || 'Sem telefone'}</span>
+                    <span>{teacher.phone ? maskPhone(teacher.phone) : 'Sem telefone'}</span>
                   </div>
                 </div>
 
@@ -252,6 +267,7 @@ export const Professores = () => {
                 <input 
                   type="text"
                   required
+                  maxLength={100}
                   placeholder="Ex: Carlos Eduardo Silva"
                   value={newTeacher.name}
                   onChange={e => setNewTeacher(prev => ({ ...prev, name: e.target.value }))}
@@ -265,6 +281,7 @@ export const Professores = () => {
                   <input 
                     type="email"
                     required
+                    maxLength={100}
                     placeholder="carlos@escolinha.com"
                     value={newTeacher.email}
                     onChange={e => setNewTeacher(prev => ({ ...prev, email: e.target.value }))}
@@ -274,10 +291,11 @@ export const Professores = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Telefone / Celular</label>
                   <input 
-                    type="text"
+                    type="tel"
+                    maxLength={15}
                     placeholder="(81) 98888-7777"
                     value={newTeacher.phone}
-                    onChange={e => setNewTeacher(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={e => setNewTeacher(prev => ({ ...prev, phone: maskPhone(e.target.value) }))}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
                   />
                 </div>
@@ -287,9 +305,10 @@ export const Professores = () => {
                 <label className="block text-xs font-bold text-gray-700 mb-1">Registro Profissional (CREF)</label>
                 <input 
                   type="text"
+                  maxLength={20}
                   placeholder="Ex: 012345-G/PE"
                   value={newTeacher.cref}
-                  onChange={e => setNewTeacher(prev => ({ ...prev, cref: e.target.value }))}
+                  onChange={e => setNewTeacher(prev => ({ ...prev, cref: e.target.value.toUpperCase() }))}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
                 />
               </div>
@@ -298,6 +317,7 @@ export const Professores = () => {
                 <label className="block text-xs font-bold text-gray-700 mb-1">Especialidades (separadas por vírgula)</label>
                 <input 
                   type="text"
+                  maxLength={200}
                   placeholder="Ex: Treinador de Goleiros, Tático Sub-15, Futsal"
                   value={newTeacher.specialties}
                   onChange={e => setNewTeacher(prev => ({ ...prev, specialties: e.target.value }))}

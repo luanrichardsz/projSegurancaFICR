@@ -205,6 +205,16 @@ export const Turmas = () => {
   // Create new class
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newClass.days_of_week || newClass.days_of_week.length === 0) {
+      setCreateError('Selecione ao menos um dia da semana para o treino.');
+      return;
+    }
+
+    if (newClass.name.trim().length < 3) {
+      setCreateError('O nome da turma deve conter no mínimo 3 caracteres.');
+      return;
+    }
+
     try {
       setCreateLoading(true);
       setCreateError('');
@@ -212,6 +222,8 @@ export const Turmas = () => {
         method: 'POST',
         body: JSON.stringify({
           ...newClass,
+          name: newClass.name.trim(),
+          location: newClass.location.trim() || undefined,
           capacity: Number(newClass.capacity)
         })
       }, token);
@@ -649,6 +661,7 @@ export const Turmas = () => {
                 <input 
                   type="text"
                   required
+                  maxLength={100}
                   placeholder="Ex: Sub-13 Manhã - Iniciação"
                   value={newClass.name}
                   onChange={e => setNewClass(prev => ({ ...prev, name: e.target.value }))}
@@ -751,6 +764,8 @@ export const Turmas = () => {
                   <label className="block text-xs font-bold text-gray-700 mb-1">Campo / Local</label>
                   <input 
                     type="text"
+                    maxLength={100}
+                    placeholder="Ex: Campo Principal A"
                     value={newClass.location}
                     onChange={e => setNewClass(prev => ({ ...prev, location: e.target.value }))}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
