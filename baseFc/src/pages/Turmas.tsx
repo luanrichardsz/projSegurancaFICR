@@ -5,7 +5,8 @@ import {
   Users, Calendar, Clock, MapPin, Plus, CheckCircle2, XCircle, 
   AlertCircle, ChevronRight, X, UserCheck, AlertTriangle,
   GraduationCap, Phone, Heart, Activity, UserMinus, Search,
-  ExternalLink, Sparkles, UserPlus, Shield, Check, Info, Edit3
+  ExternalLink, Sparkles, UserPlus, Shield, Check, Info, Edit3,
+  Trash2
 } from 'lucide-react';
 import { maskPhone, maskCPF } from '../utils/masks.ts';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
@@ -48,6 +49,7 @@ export const Turmas = () => {
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [viewingProfileStudentId, setViewingProfileStudentId] = useState<string | null>(null);
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
 
   // Other Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -207,6 +209,45 @@ export const Turmas = () => {
       alert(`Erro ao desvincular atleta: ${err.message}`);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  // Excluir Turma (apenas se não houver nenhum aluno matriculado)
+  const handleDeleteClass = async (turma: { id: string; name: string; enrolledCount?: number; students?: any[] }) => {
+    const studentCount = turma.enrolledCount !== undefined 
+      ? turma.enrolledCount 
+      : Array.isArray(turma.students) 
+      ? turma.students.length 
+      : 0;
+
+    if (studentCount > 0) {
+      alert(
+        `⚠️ Bloqueio de Segurança:\n\n` +
+        `Não é possível excluir a turma "${turma.name}" porque ela possui ${studentCount} aluno(s) matriculado(s).\n\n` +
+        `Para garantir a integridade dos dados e a segurança dos atletas, remova ou transfira todos os alunos antes de excluir a turma.`
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir permanentemente a turma "${turma.name}"?\n\n` +
+      `Esta ação removerá a turma do sistema e não poderá ser desfeita.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeleteLoading(turma.id);
+      await fetchApi(`/classes/${turma.id}`, { method: 'DELETE' }, token);
+      if (selectedClassDetail?.id === turma.id) {
+        setSelectedClassDetail(null);
+      }
+      await loadClassesAndTeachers();
+      alert(`Turma "${turma.name}" excluída com sucesso!`);
+    } catch (err: any) {
+      alert(`Erro ao excluir turma: ${err.message}`);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -487,16 +528,42 @@ export const Turmas = () => {
                     Ver Atletas ({count})
                   </span>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAttendance(turma);
-                    }}
-                    className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-lg transition-colors shadow-xs"
-                  >
-                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    Chamada
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {role === 'GESTOR' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClass(turma);
+                        }}
+                        disabled={deleteLoading === turma.id}
+                        className={`inline-flex items-center justify-center p-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                          count > 0 
+                            ? 'text-gray-400 bg-gray-100 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200' 
+                            : 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200'
+                        }`}
+                        title={count > 0 ? `Bloqueio: Turma possui ${count} aluno(s) matriculado(s)` : 'Excluir turma'}
+                      >
+                        {deleteLoading === turma.id ? (
+                          <span className="animate-spin text-xs">...</span>
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAttendance(turma);
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-semibold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-lg transition-colors shadow-xs cursor-pointer"
+                    >
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      Chamada
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -981,6 +1048,27 @@ export const Turmas = () => {
               </div>
 
               <div className="flex items-center gap-2 ml-auto">
+                {role === 'GESTOR' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClass(selectedClassDetail)}
+                    disabled={deleteLoading === selectedClassDetail.id}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                      (selectedClassDetail.students?.length || 0) > 0
+                        ? 'text-gray-400 bg-gray-100 border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+                        : 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200'
+                    }`}
+                    title={
+                      (selectedClassDetail.students?.length || 0) > 0
+                        ? `Bloqueio: Turma possui ${selectedClassDetail.students.length} aluno(s) matriculado(s)`
+                        : 'Excluir turma permanentemente'
+                    }
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    {deleteLoading === selectedClassDetail.id ? 'Excluindo...' : 'Excluir Turma'}
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setSelectedClassDetail(null)}

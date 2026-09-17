@@ -498,6 +498,68 @@ export class ClassService {
 
     return { message: 'Aluno removido da turma com sucesso.' };
   }
+
+  async deleteClass(classId: string, schoolId: string, userId: string) {
+    // 1. Verificar se a turma existe e pertence à escola
+    const { data: targetClass, error: classError } = await supabaseAdmin
+      .from('classes')
+      .select('id, name, category')
+      .eq('id', classId)
+      .eq('school_id', schoolId)
+      .single();
+
+    if (classError || !targetClass) {
+      const err: any = new Error('Turma não encontrada.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // 2. Condição obrigatória: verificar se há alunos matriculados na turma
+    const { count, error: countError } = await supabaseAdmin
+      .from('class_students')
+      .select('*', { count: 'exact', head: true })
+      .eq('class_id', classId);
+
+    if (countError) {
+      console.error('Erro ao verificar alunos da turma:', countError);
+      throw new Error('Falha ao verificar alunos vinculados à turma.');
+    }
+
+    if (count && count > 0) {
+      const err: any = new Error(
+        `Não é possível excluir a turma "${targetClass.name}" pois ela possui ${count} aluno(s) matriculado(s). Remova ou transfira todos os alunos antes de excluir a turma.`
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 3. Excluir a turma
+    const { error: deleteError } = await supabaseAdmin
+      .from('classes')
+      .delete()
+      .eq('id', classId)
+      .eq('school_id', schoolId);
+
+    if (deleteError) {
+      console.error('Erro ao excluir turma:', deleteError);
+      throw new Error(`Falha ao excluir turma: ${deleteError.message}`);
+    }
+
+    // 4. Registrar na Trilha de Auditoria (Integridade - CID)
+    await supabaseAdmin.from('audit_logs').insert([{
+      school_id: schoolId,
+      user_id: userId,
+      action: 'EXCLUIR_TURMA',
+      resource: `Turma: ${targetClass.name}`,
+      details: {
+        classId,
+        name: targetClass.name,
+        category: targetClass.category
+      }
+    }]);
+
+    return { message: `Turma "${targetClass.name}" excluída com sucesso.` };
+  }
 }
 
 export const classService = new ClassService();

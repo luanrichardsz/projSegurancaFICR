@@ -22,16 +22,18 @@ export class DashboardService {
       .select(`
         amount,
         status,
+        due_date,
         students!inner (
           school_id
         )
       `)
       .eq('students.school_id', schoolId);
 
+    const today = new Date().toISOString().slice(0, 10);
     const allPayments = payments || [];
     const paidList = allPayments.filter((p: any) => p.status === 'PAGO');
-    const pendingList = allPayments.filter((p: any) => p.status === 'PENDENTE');
-    const overdueList = allPayments.filter((p: any) => p.status === 'ATRASADO');
+    const pendingList = allPayments.filter((p: any) => p.status === 'PENDENTE' && p.due_date >= today);
+    const overdueList = allPayments.filter((p: any) => p.status === 'ATRASADO' || (p.status === 'PENDENTE' && p.due_date < today));
 
     const totalReceived = paidList.reduce((acc: number, cur: any) => acc + Number(cur.amount || 0), 0);
 

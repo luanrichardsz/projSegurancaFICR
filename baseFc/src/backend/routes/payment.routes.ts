@@ -12,5 +12,6 @@ router.get('/', requireRole(['GESTOR']), paymentController.list);
 router.post('/', requireRole(['GESTOR']), paymentController.create);
 router.post('/batch', requireRole(['GESTOR']), paymentController.generateBatch);
 router.post('/:id/pay', requireRole(['GESTOR']), paymentController.recordPayment);
+router.delete('/:id', requireRole(['GESTOR']), paymentController.delete);
 
 export default router;

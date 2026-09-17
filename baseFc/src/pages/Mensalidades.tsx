@@ -3,25 +3,35 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
   CreditCard, Search, Filter, Plus, Calendar, CheckCircle2, 
-  AlertTriangle, Clock, ShieldCheck, DollarSign, X, AlertCircle, FileText
+  AlertTriangle, Clock, ShieldCheck, DollarSign, X, AlertCircle, FileText,
+  Trash2
 } from 'lucide-react';
+import { maskCPF } from '../utils/masks.ts';
 
 interface Payment {
   id: string;
   student_id: string;
+  studentId?: string;
   amount: number;
   due_date: string;
+  dueDate?: string;
   payment_date?: string;
+  paid_at?: string;
+  paidAt?: string;
   status: 'PENDENTE' | 'PAGO' | 'ATRASADO';
-  payment_method?: 'PIX' | 'DINHEIRO' | 'CARTAO';
+  payment_method?: 'PIX' | 'DINHEIRO' | 'CARTAO' | 'TRANSFERENCIA';
+  paymentMethod?: string;
+  competence?: string;
   reference_month: number;
   reference_year: number;
   notes?: string;
+  studentName?: string;
+  category?: string;
   students?: {
     id: string;
     name: string;
-    cpf: string;
-    category: string;
+    cpf?: string;
+    category?: string;
   };
 }
 
@@ -65,10 +75,11 @@ export const Mensalidades = () => {
 
   // Pay Modal Form
   const [payForm, setPayForm] = useState({
-    payment_method: 'PIX' as 'PIX' | 'DINHEIRO' | 'CARTAO',
+    payment_method: 'PIX' as 'PIX' | 'DINHEIRO' | 'CARTAO' | 'TRANSFERENCIA',
     notes: ''
   });
   const [payLoading, setPayLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -99,17 +110,21 @@ export const Mensalidades = () => {
     try {
       setBatchLoading(true);
       setBatchResult(null);
+      const comp = `${String(batchForm.reference_month).padStart(2, '0')}/${batchForm.reference_year}`;
       const res = await fetchApi('/payments/batch', {
         method: 'POST',
         body: JSON.stringify({
-          reference_month: Number(batchForm.reference_month),
-          reference_year: Number(batchForm.reference_year),
+          competence: comp,
+          dueDate: batchForm.due_date,
           due_date: batchForm.due_date,
-          default_amount: Number(batchForm.default_amount)
+          amount: Number(batchForm.default_amount),
+          default_amount: Number(batchForm.default_amount),
+          reference_month: Number(batchForm.reference_month),
+          reference_year: Number(batchForm.reference_year)
         })
       }, token);
 
-      setBatchResult(`Sucesso! ${res.count || 0} mensalidades geradas.`);
+      setBatchResult(res.message || `Sucesso! ${res.count || 0} mensalidades geradas.`);
       await loadData();
       setTimeout(() => {
         setShowBatchModal(false);
@@ -125,14 +140,22 @@ export const Mensalidades = () => {
   // Single create
   const handleSingleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!singleForm.student_id) {
+      alert('Selecione um atleta.');
+      return;
+    }
     try {
       setSingleLoading(true);
+      const comp = `${String(singleForm.reference_month).padStart(2, '0')}/${singleForm.reference_year}`;
       await fetchApi('/payments', {
         method: 'POST',
         body: JSON.stringify({
           student_id: singleForm.student_id,
+          studentId: singleForm.student_id,
           amount: Number(singleForm.amount),
           due_date: singleForm.due_date,
+          dueDate: singleForm.due_date,
+          competence: comp,
           reference_month: Number(singleForm.reference_month),
           reference_year: Number(singleForm.reference_year)
         })
@@ -140,6 +163,7 @@ export const Mensalidades = () => {
 
       setShowSingleModal(false);
       await loadData();
+      alert('Mensalidade lançada com sucesso!');
     } catch (err: any) {
       alert(`Erro ao lançar mensalidade: ${err.message}`);
     } finally {
@@ -157,6 +181,7 @@ export const Mensalidades = () => {
         method: 'POST',
         body: JSON.stringify({
           payment_method: payForm.payment_method,
+          paymentMethod: payForm.payment_method,
           notes: payForm.notes
         })
       }, token);
@@ -164,6 +189,7 @@ export const Mensalidades = () => {
       setPayingPayment(null);
       setPayForm({ payment_method: 'PIX', notes: '' });
       await loadData();
+      alert('Baixa de mensalidade registrada com sucesso!');
     } catch (err: any) {
       alert(`Erro ao dar baixa na mensalidade: ${err.message}`);
     } finally {
@@ -171,10 +197,36 @@ export const Mensalidades = () => {
     }
   };
 
+  // Delete / Cancel payment
+  const handleDeletePayment = async (payment: Payment) => {
+    if (payment.status === 'PAGO') {
+      alert('Não é possível excluir uma mensalidade que já consta como PAGA.');
+      return;
+    }
+
+    const athleteName = payment.students?.name || payment.studentName || 'o atleta';
+    const comp = payment.competence || (payment.reference_month ? `${String(payment.reference_month).padStart(2, '0')}/${payment.reference_year}` : '');
+
+    if (!window.confirm(`Deseja realmente cancelar e excluir a cobrança (${comp}) de ${athleteName}?`)) {
+      return;
+    }
+
+    try {
+      setActionLoadingId(payment.id);
+      await fetchApi(`/payments/${payment.id}`, { method: 'DELETE' }, token);
+      await loadData();
+      alert('Cobrança cancelada e excluída com sucesso!');
+    } catch (err: any) {
+      alert(`Erro ao excluir cobrança: ${err.message}`);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   // Filtered payments
   const filteredPayments = useMemo(() => {
     return payments.filter(p => {
-      const studentName = p.students?.name || '';
+      const studentName = p.students?.name || p.studentName || '';
       const studentCpf = p.students?.cpf || '';
       const matchesSearch = 
         studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -218,15 +270,20 @@ export const Mensalidades = () => {
         {role === 'GESTOR' && (
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setShowSingleModal(true)}
-              className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition-all shadow-xs"
+              onClick={() => {
+                if (students.length > 0 && !singleForm.student_id) {
+                  setSingleForm(prev => ({ ...prev, student_id: students[0].id }));
+                }
+                setShowSingleModal(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl font-medium hover:bg-gray-50 transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4 text-gray-500" />
               Lançamento Avulso
             </button>
             <button 
               onClick={() => setShowBatchModal(true)}
-              className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95"
+              className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95 cursor-pointer"
             >
               <Calendar className="w-4 h-4 text-emerald-400" />
               Gerar Lote do Mês
@@ -312,7 +369,7 @@ export const Mensalidades = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600"
+              className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600 cursor-pointer"
             >
               <option value="TODOS">Todos os Status</option>
               <option value="PENDENTE">Pendentes</option>
@@ -323,7 +380,7 @@ export const Mensalidades = () => {
             <select
               value={monthFilter}
               onChange={e => setMonthFilter(e.target.value)}
-              className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600"
+              className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600 cursor-pointer"
             >
               <option value="TODOS">Todos os Meses</option>
               <option value="1">Janeiro</option>
@@ -352,7 +409,7 @@ export const Mensalidades = () => {
             <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-gray-800">Nenhuma mensalidade encontrada</h3>
             <p className="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
-              Clique em "Gerar Lote do Mês" para emitir as cobranças de todos os atletas ativos.
+              Clique em "Gerar Lote do Mês" para emitir as cobranças de todos os atletas ativos ou faça um "Lançamento Avulso".
             </p>
           </div>
         ) : (
@@ -361,7 +418,7 @@ export const Mensalidades = () => {
               <thead className="bg-gray-50/80 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4">Atleta</th>
-                  <th className="px-6 py-4">Mês / Ano</th>
+                  <th className="px-6 py-4">Competência</th>
                   <th className="px-6 py-4">Valor</th>
                   <th className="px-6 py-4">Vencimento</th>
                   <th className="px-6 py-4">Status</th>
@@ -373,17 +430,19 @@ export const Mensalidades = () => {
                 {filteredPayments.map(p => (
                   <tr key={p.id} className="hover:bg-emerald-50/30 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">{p.students?.name || 'Atleta'}</div>
-                      <div className="text-2xs text-gray-500">{p.students?.category || 'Geral'} • CPF: {p.students?.cpf || 'S/N'}</div>
+                      <div className="font-semibold text-gray-900">{p.students?.name || p.studentName || 'Atleta'}</div>
+                      <div className="text-2xs text-gray-500">
+                        {p.students?.category || p.category || 'Geral'} • CPF: {p.students?.cpf && p.students.cpf !== '00000000000' ? maskCPF(p.students.cpf) : 'Não informado'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-xs font-bold text-gray-700">
-                      {String(p.reference_month).padStart(2, '0')}/{p.reference_year}
+                      {p.competence || (p.reference_month ? `${String(p.reference_month).padStart(2, '0')}/${p.reference_year}` : '-')}
                     </td>
                     <td className="px-6 py-4 text-sm font-black text-gray-900">
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.amount)}
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-600">
-                      {p.due_date ? new Date(p.due_date).toLocaleDateString('pt-BR') : '-'}
+                      {p.due_date ? new Date(p.due_date + 'T12:00:00').toLocaleDateString('pt-BR') : '-'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full ${
@@ -402,9 +461,9 @@ export const Mensalidades = () => {
                     <td className="px-6 py-4 text-xs text-gray-600">
                       {p.status === 'PAGO' ? (
                         <div>
-                          <span className="font-semibold text-gray-800">{p.payment_method || 'MANUAL'}</span>
+                          <span className="font-semibold text-gray-800">{p.payment_method || p.paymentMethod || 'MANUAL'}</span>
                           <span className="text-2xs text-gray-400 block">
-                            {p.payment_date ? new Date(p.payment_date).toLocaleDateString('pt-BR') : ''}
+                            {p.paid_at || p.payment_date ? new Date(p.paid_at || p.payment_date!).toLocaleDateString('pt-BR') : ''}
                           </span>
                         </div>
                       ) : (
@@ -412,20 +471,34 @@ export const Mensalidades = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {p.status !== 'PAGO' && role === 'GESTOR' ? (
-                        <button
-                          onClick={() => setPayingPayment(p)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors shadow-2xs"
-                          title="Dar baixa com integridade comprovada"
-                        >
-                          <DollarSign className="w-3.5 h-3.5" />
-                          Dar Baixa
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Quitado
-                        </span>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {p.status !== 'PAGO' && role === 'GESTOR' ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setPayingPayment(p)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg transition-colors shadow-2xs cursor-pointer"
+                              title="Dar baixa com integridade comprovada"
+                            >
+                              <DollarSign className="w-3.5 h-3.5" />
+                              Dar Baixa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePayment(p)}
+                              disabled={actionLoadingId === p.id}
+                              className="inline-flex items-center justify-center p-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer"
+                              title="Cancelar/Excluir cobrança"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Quitado
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -445,26 +518,29 @@ export const Mensalidades = () => {
                 <p className="text-xs text-gray-500">Baixa manual com integridade protegida</p>
               </div>
               <button 
+                type="button"
                 onClick={() => setPayingPayment(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmPayment} className="space-y-4 pt-4">
-              <div className="bg-gray-50 p-4 rounded-xl space-y-2 text-xs">
+              <div className="bg-gray-50 p-4 rounded-xl space-y-1.5 border border-gray-100 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Atleta:</span>
-                  <span className="font-bold text-gray-800">{payingPayment.students?.name}</span>
+                  <span className="font-bold text-gray-800">{payingPayment.students?.name || payingPayment.studentName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Referência:</span>
-                  <span className="font-bold text-gray-800">{payingPayment.reference_month}/{payingPayment.reference_year}</span>
+                  <span className="text-gray-500">Competência:</span>
+                  <span className="font-bold text-gray-800">
+                    {payingPayment.competence || `${String(payingPayment.reference_month).padStart(2, '0')}/${payingPayment.reference_year}`}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Valor Cadastrado:</span>
-                  <span className="font-black text-emerald-700 text-sm">
+                  <span className="text-gray-500">Valor a liquidar:</span>
+                  <span className="font-bold text-emerald-700 text-sm">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(payingPayment.amount)}
                   </span>
                 </div>
@@ -472,30 +548,24 @@ export const Mensalidades = () => {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Forma de Pagamento *</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['PIX', 'DINHEIRO', 'CARTAO'] as const).map(method => (
-                    <button
-                      type="button"
-                      key={method}
-                      onClick={() => setPayForm(prev => ({ ...prev, payment_method: method }))}
-                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                        payForm.payment_method === method
-                          ? 'bg-[#112F20] text-white border-[#112F20] shadow-xs'
-                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {method}
-                    </button>
-                  ))}
-                </div>
+                <select
+                  value={payForm.payment_method}
+                  onChange={e => setPayForm(prev => ({ ...prev, payment_method: e.target.value as any }))}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
+                >
+                  <option value="PIX">PIX (Comprovante verificado)</option>
+                  <option value="DINHEIRO">Dinheiro em Espécie</option>
+                  <option value="CARTAO">Cartão de Crédito/Débito</option>
+                  <option value="TRANSFERENCIA">Transferência Bancária / TED</option>
+                </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Observações (Opcional)</label>
-                <textarea
-                  rows={2}
-                  maxLength={250}
-                  placeholder="Ex: Comprovante enviado via WhatsApp pelo responsável"
+                <label className="block text-xs font-bold text-gray-700 mb-1">Observações de Liquidação (Opcional)</label>
+                <input 
+                  type="text"
+                  maxLength={150}
+                  placeholder="Ex: Recebido presencialmente na secretaria"
                   value={payForm.notes}
                   onChange={e => setPayForm(prev => ({ ...prev, notes: e.target.value }))}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
@@ -506,14 +576,14 @@ export const Mensalidades = () => {
                 <button
                   type="button"
                   onClick={() => setPayingPayment(null)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={payLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {payLoading ? 'Gravando...' : 'Confirmar Baixa'}
                 </button>
@@ -533,8 +603,9 @@ export const Mensalidades = () => {
                 <p className="text-xs text-gray-500">Emite cobranças para todos os atletas ativos</p>
               </div>
               <button 
+                type="button"
                 onClick={() => setShowBatchModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -554,7 +625,7 @@ export const Mensalidades = () => {
                   <select
                     value={batchForm.reference_month}
                     onChange={e => setBatchForm(prev => ({ ...prev, reference_month: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
                       <option key={m} value={m}>Mês {String(m).padStart(2, '0')}</option>
@@ -582,7 +653,7 @@ export const Mensalidades = () => {
                   required
                   value={batchForm.due_date}
                   onChange={e => setBatchForm(prev => ({ ...prev, due_date: e.target.value }))}
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
                 />
               </div>
 
@@ -604,14 +675,14 @@ export const Mensalidades = () => {
                 <button
                   type="button"
                   onClick={() => setShowBatchModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={batchLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {batchLoading ? 'Gerando...' : 'Gerar Títulos'}
                 </button>
@@ -631,8 +702,9 @@ export const Mensalidades = () => {
                 <p className="text-xs text-gray-500">Adicione uma cobrança individual</p>
               </div>
               <button 
+                type="button"
                 onClick={() => setShowSingleModal(false)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -644,10 +716,14 @@ export const Mensalidades = () => {
                 <select
                   value={singleForm.student_id}
                   onChange={e => setSingleForm(prev => ({ ...prev, student_id: e.target.value }))}
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  required
                 >
+                  <option value="">Selecione um atleta...</option>
                   {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} - {s.category || 'Geral'}</option>
+                    <option key={s.id} value={s.id}>
+                      {s.name} - {s.category || 'Geral'} {s.status !== 'ATIVO' ? `(${s.status})` : ''}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -655,14 +731,15 @@ export const Mensalidades = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Mês *</label>
-                  <input 
-                    type="number"
-                    min="1"
-                    max="12"
+                  <select
                     value={singleForm.reference_month}
                     onChange={e => setSingleForm(prev => ({ ...prev, reference_month: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
-                  />
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                      <option key={m} value={m}>Mês {String(m).padStart(2, '0')}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Ano *</label>
@@ -699,7 +776,7 @@ export const Mensalidades = () => {
                     required
                     value={singleForm.due_date}
                     onChange={e => setSingleForm(prev => ({ ...prev, due_date: e.target.value }))}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
                   />
                 </div>
               </div>
@@ -708,14 +785,14 @@ export const Mensalidades = () => {
                 <button
                   type="button"
                   onClick={() => setShowSingleModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={singleLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
                 >
                   {singleLoading ? 'Criando...' : 'Criar Cobrança'}
                 </button>

@@ -115,6 +115,22 @@ export class ClassController {
       next(error);
     }
   }
+
+  async delete(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.user?.schoolId;
+      if (!schoolId) return res.status(400).json({ error: 'Escola não identificada.' });
+
+      const classId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const result = await classService.deleteClass(classId, schoolId, req.user!.uid);
+      return res.json(result);
+    } catch (error: any) {
+      if (error.statusCode) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      next(error);
+    }
+  }
 }
 
 export const classController = new ClassController();
