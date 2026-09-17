@@ -9,5 +9,7 @@ router.use(requireAuth);
 
 router.get('/', requireRole(['GESTOR', 'PROFESSOR']), teacherController.list);
 router.post('/', requireRole(['GESTOR']), teacherController.create);
+router.put('/:id', requireRole(['GESTOR']), teacherController.update);
+router.delete('/:id', requireRole(['GESTOR']), teacherController.delete);
 
 export default router;

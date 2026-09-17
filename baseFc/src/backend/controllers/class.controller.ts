@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middlewares/auth.middleware.ts';
 import { classService } from '../services/class.service.ts';
-import { createClassSchema, enrollStudentSchema } from '../validators/class.validator.ts';
+import { createClassSchema, updateClassSchema, enrollStudentSchema } from '../validators/class.validator.ts';
 import { ZodError } from 'zod';
 
 export class ClassController {
@@ -27,6 +27,16 @@ export class ClassController {
     }
   }
 
+  async getStudents(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const classData = await classService.getClassById(id);
+      return res.json(classData.students || []);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async create(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const schoolId = req.user?.schoolId;
@@ -37,7 +47,26 @@ export class ClassController {
       return res.status(201).json(newClass);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ error: 'Dados inválidos', details: error.issues || (error as any).errors });
+        const firstError = error.issues?.[0]?.message || 'Dados inválidos';
+        return res.status(400).json({ error: firstError, details: error.issues });
+      }
+      next(error);
+    }
+  }
+
+  async update(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.user?.schoolId;
+      if (!schoolId) return res.status(400).json({ error: 'Escola não identificada.' });
+
+      const classId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const validatedData = updateClassSchema.parse(req.body);
+      const updatedClass = await classService.updateClass(classId, schoolId, validatedData, req.user!.uid);
+      return res.json(updatedClass);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const firstError = error.issues?.[0]?.message || 'Dados inválidos';
+        return res.status(400).json({ error: firstError, details: error.issues });
       }
       next(error);
     }
@@ -49,13 +78,15 @@ export class ClassController {
       if (!schoolId) return res.status(400).json({ error: 'Escola não identificada.' });
 
       const classId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const { studentId } = enrollStudentSchema.parse(req.body);
+      const validated = enrollStudentSchema.parse(req.body);
+      const studentId = validated.studentId || validated.student_id!;
 
       const result = await classService.enrollStudent(classId, studentId, schoolId, req.user!.uid);
       return res.status(200).json(result);
     } catch (error: any) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ error: 'Dados inválidos', details: error.issues || (error as any).errors });
+        const firstError = error.issues?.[0]?.message || 'Dados inválidos';
+        return res.status(400).json({ error: firstError, details: error.issues });
       }
       if (error.statusCode) {
         return res.status(error.statusCode).json({ error: error.message });
@@ -81,3 +112,4 @@ export class ClassController {
 }
 
 export const classController = new ClassController();
+

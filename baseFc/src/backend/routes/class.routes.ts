@@ -10,10 +10,17 @@ router.use(requireAuth);
 // Gestores e Professores podem listar turmas e ver detalhes
 router.get('/', requireRole(['GESTOR', 'PROFESSOR']), classController.list);
 router.get('/:id', requireRole(['GESTOR', 'PROFESSOR']), classController.getOne);
+router.get('/:id/students', requireRole(['GESTOR', 'PROFESSOR']), classController.getStudents);
 
-// Apenas Gestor pode criar turma e matricular/desmatricular alunos
+// Gestor pode criar e editar turmas (incluindo definir professor)
 router.post('/', requireRole(['GESTOR']), classController.create);
+router.put('/:id', requireRole(['GESTOR']), classController.update);
+
+// Matricular / Desmatricular alunos
 router.post('/:id/students', requireRole(['GESTOR']), classController.enrollStudent);
+router.post('/:id/enroll', requireRole(['GESTOR']), classController.enrollStudent);
 router.delete('/:id/students/:studentId', requireRole(['GESTOR']), classController.unenrollStudent);
+router.delete('/:id/enroll/:studentId', requireRole(['GESTOR']), classController.unenrollStudent);
 
 export default router;
+

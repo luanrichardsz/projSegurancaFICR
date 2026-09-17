@@ -3,15 +3,15 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
   UserCheck, Plus, Mail, Phone, Award, Shield, 
-  Trash2, X, AlertCircle, CheckCircle2, Search
+  Trash2, X, AlertCircle, CheckCircle2, Search, Edit2
 } from 'lucide-react';
 import { maskPhone, unmask, isValidPhone } from '../utils/masks.ts';
 
 interface Teacher {
   id: string;
   name: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   cref?: string;
   specialties?: string[];
   status: string;
@@ -24,16 +24,29 @@ export const Professores = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // New teacher modal
-  const [showModal, setShowModal] = useState(false);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState('');
+  // New teacher modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
   const [newTeacher, setNewTeacher] = useState({
     name: '',
     email: '',
     phone: '',
     cref: '',
     specialties: 'Preparação Física, Iniciação'
+  });
+
+  // Edit teacher modal state
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    cref: '',
+    specialties: '',
+    status: 'ATIVO'
   });
 
   const loadTeachers = async () => {
@@ -52,24 +65,25 @@ export const Professores = () => {
     loadTeachers();
   }, [token]);
 
+  // Create Teacher
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
+    setCreateError('');
 
     if (newTeacher.name.trim().length < 3) {
-      setFormError('O nome do professor deve ter no mínimo 3 caracteres.');
+      setCreateError('O nome do professor deve ter no mínimo 3 caracteres.');
       return;
     }
 
     if (newTeacher.phone && unmask(newTeacher.phone).length > 0) {
       if (!isValidPhone(newTeacher.phone)) {
-        setFormError('O telefone deve conter DDD + 8 ou 9 dígitos válidos.');
+        setCreateError('O telefone deve conter DDD + 8 ou 9 dígitos válidos.');
         return;
       }
     }
 
     try {
-      setFormLoading(true);
+      setCreateLoading(true);
       
       const specialtiesArray = newTeacher.specialties
         .split(',')
@@ -80,14 +94,14 @@ export const Professores = () => {
         method: 'POST',
         body: JSON.stringify({
           name: newTeacher.name.trim(),
-          email: newTeacher.email.trim().toLowerCase(),
+          email: newTeacher.email.trim().toLowerCase() || undefined,
           phone: unmask(newTeacher.phone) || undefined,
           cref: newTeacher.cref.trim().toUpperCase() || undefined,
           specialties: specialtiesArray
         })
       }, token);
 
-      setShowModal(false);
+      setShowCreateModal(false);
       setNewTeacher({
         name: '',
         email: '',
@@ -97,12 +111,74 @@ export const Professores = () => {
       });
       await loadTeachers();
     } catch (err: any) {
-      setFormError(err.message || 'Erro ao cadastrar professor');
+      setCreateError(err.message || 'Erro ao cadastrar professor');
     } finally {
-      setFormLoading(false);
+      setCreateLoading(false);
     }
   };
 
+  // Open Edit Modal
+  const handleOpenEdit = (teacher: Teacher) => {
+    setEditingTeacher(teacher);
+    setEditError('');
+    setEditForm({
+      name: teacher.name || '',
+      email: teacher.email || '',
+      phone: teacher.phone ? maskPhone(teacher.phone) : '',
+      cref: teacher.cref || '',
+      specialties: Array.isArray(teacher.specialties) ? teacher.specialties.join(', ') : '',
+      status: teacher.status || 'ATIVO'
+    });
+  };
+
+  // Submit Update
+  const handleUpdateTeacher = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeacher) return;
+    setEditError('');
+
+    if (editForm.name.trim().length < 3) {
+      setEditError('O nome do professor deve ter no mínimo 3 caracteres.');
+      return;
+    }
+
+    if (editForm.phone && unmask(editForm.phone).length > 0) {
+      if (!isValidPhone(editForm.phone)) {
+        setEditError('O telefone deve conter DDD + 8 ou 9 dígitos válidos.');
+        return;
+      }
+    }
+
+    try {
+      setEditLoading(true);
+
+      const specialtiesArray = editForm.specialties
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      await fetchApi(`/teachers/${editingTeacher.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          email: editForm.email.trim().toLowerCase() || null,
+          phone: unmask(editForm.phone) || null,
+          cref: editForm.cref.trim().toUpperCase() || null,
+          specialties: specialtiesArray,
+          status: editForm.status
+        })
+      }, token);
+
+      setEditingTeacher(null);
+      await loadTeachers();
+    } catch (err: any) {
+      setEditError(err.message || 'Erro ao atualizar dados do professor');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Inactivate / Delete Teacher
   const handleDeleteTeacher = async (id: string, name: string) => {
     if (!window.confirm(`Deseja inativar o professor ${name}?`)) return;
     try {
@@ -114,8 +190,8 @@ export const Professores = () => {
   };
 
   const filteredTeachers = teachers.filter(t => 
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.name && t.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (t.email && t.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (t.cref && t.cref.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -130,7 +206,7 @@ export const Professores = () => {
         
         {role === 'GESTOR' && (
           <button 
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
@@ -177,7 +253,7 @@ export const Professores = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-[#112F20] text-emerald-300 font-bold flex items-center justify-center text-base shadow-xs">
-                      {teacher.name.charAt(0)}
+                      {teacher.name ? teacher.name.charAt(0).toUpperCase() : 'P'}
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-gray-900">{teacher.name}</h3>
@@ -188,24 +264,33 @@ export const Professores = () => {
                   </div>
 
                   {role === 'GESTOR' && (
-                    <button
-                      onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Inativar professor"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEdit(teacher)}
+                        className="p-1.5 text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                        title="Editar professor"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTeacher(teacher.id, teacher.name)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Inativar professor"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-2 text-xs text-gray-600 mb-4 pt-2 border-t border-gray-50">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>{teacher.email}</span>
+                    <Mail className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span className="truncate">{teacher.email || 'E-mail não cadastrado'}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>{teacher.phone ? maskPhone(teacher.phone) : 'Sem telefone'}</span>
+                    <Phone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span>{teacher.phone ? maskPhone(teacher.phone) : 'Telefone não cadastrado'}</span>
                   </div>
                 </div>
 
@@ -228,7 +313,11 @@ export const Professores = () => {
 
               <div className="mt-5 pt-3 border-t border-gray-50 flex items-center justify-between text-2xs text-gray-500">
                 <span>Status:</span>
-                <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <span className={`font-bold px-2 py-0.5 rounded-full ${
+                  teacher.status === 'ATIVO' 
+                    ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' 
+                    : 'text-red-700 bg-red-50 border border-red-200'
+                }`}>
                   {teacher.status || 'ATIVO'}
                 </span>
               </div>
@@ -237,8 +326,8 @@ export const Professores = () => {
         </div>
       )}
 
-      {/* Modal: Cadastrar Professor */}
-      {showModal && (
+      {/* Modal 1: Cadastrar Professor */}
+      {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-6">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
@@ -247,7 +336,7 @@ export const Professores = () => {
                 <p className="text-xs text-gray-500">Adicione um novo integrante à comissão técnica</p>
               </div>
               <button 
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowCreateModal(false)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
               >
                 <X className="w-5 h-5" />
@@ -255,10 +344,10 @@ export const Professores = () => {
             </div>
 
             <form onSubmit={handleCreateTeacher} className="space-y-4 pt-4">
-              {formError && (
+              {createError && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{formError}</span>
+                  <span>{createError}</span>
                 </div>
               )}
 
@@ -277,10 +366,9 @@ export const Professores = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">E-mail *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">E-mail</label>
                   <input 
                     type="email"
-                    required
                     maxLength={100}
                     placeholder="carlos@escolinha.com"
                     value={newTeacher.email}
@@ -328,17 +416,138 @@ export const Professores = () => {
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => setShowCreateModal(false)}
                   className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={formLoading}
+                  disabled={createLoading}
                   className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
                 >
-                  {formLoading ? 'Cadastrando...' : 'Salvar Professor'}
+                  {createLoading ? 'Cadastrando...' : 'Salvar Professor'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Editar Professor */}
+      {editingTeacher && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Editar Professor</h3>
+                <p className="text-xs text-gray-500">Atualize dados cadastrais, e-mail, telefone e CREF</p>
+              </div>
+              <button 
+                onClick={() => setEditingTeacher(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateTeacher} className="space-y-4 pt-4">
+              {editError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{editError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Nome Completo *</label>
+                <input 
+                  type="text"
+                  required
+                  maxLength={100}
+                  placeholder="Ex: Carlos Eduardo Silva"
+                  value={editForm.name}
+                  onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">E-mail</label>
+                  <input 
+                    type="email"
+                    maxLength={100}
+                    placeholder="carlos@escolinha.com"
+                    value={editForm.email}
+                    onChange={e => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Telefone / Celular</label>
+                  <input 
+                    type="tel"
+                    maxLength={15}
+                    placeholder="(81) 98888-7777"
+                    value={editForm.phone}
+                    onChange={e => setEditForm(prev => ({ ...prev, phone: maskPhone(e.target.value) }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">CREF</label>
+                  <input 
+                    type="text"
+                    maxLength={20}
+                    placeholder="Ex: 012345-G/PE"
+                    value={editForm.cref}
+                    onChange={e => setEditForm(prev => ({ ...prev, cref: e.target.value.toUpperCase() }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={e => setEditForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                  >
+                    <option value="ATIVO">Ativo</option>
+                    <option value="INATIVO">Inativo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Especialidades (separadas por vírgula)</label>
+                <input 
+                  type="text"
+                  maxLength={200}
+                  placeholder="Ex: Treinador de Goleiros, Tático Sub-15, Futsal"
+                  value={editForm.specialties}
+                  onChange={e => setEditForm(prev => ({ ...prev, specialties: e.target.value }))}
+                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingTeacher(null)}
+                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                >
+                  {editLoading ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
               </div>
             </form>

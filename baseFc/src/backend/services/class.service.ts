@@ -46,7 +46,12 @@ export class ClassService {
         *,
         teachers (
           id,
-          name
+          name,
+          email,
+          phone,
+          cref,
+          specialties,
+          status
         ),
         class_students (
           students (
@@ -55,7 +60,16 @@ export class ClassService {
             cpf,
             category,
             shirt_number,
-            status
+            status,
+            dob,
+            phone,
+            address,
+            position,
+            dominant_foot,
+            medical_restrictions,
+            allergies,
+            medications,
+            enrolled_at
           )
         )
       `)
@@ -66,13 +80,65 @@ export class ClassService {
       throw new Error('Turma não encontrada');
     }
 
-    const students = (classData.class_students || [])
+    const rawStudents = (classData.class_students || [])
       .map((cs: any) => cs.students)
-      .filter(Boolean)
-      .map((s: any) => ({
+      .filter(Boolean);
+
+    const studentIds = rawStudents.map((s: any) => s.id);
+
+    // Buscar responsáveis e contatos de emergência em paralelo
+    const guardiansMap: Record<string, any[]> = {};
+    const emergencyMap: Record<string, any[]> = {};
+
+    if (studentIds.length > 0) {
+      const [guardiansRes, emergencyRes] = await Promise.all([
+        supabaseAdmin
+          .from('guardian_students')
+          .select('student_id, guardians (id, name, phone, cpf)')
+          .in('student_id', studentIds),
+        supabaseAdmin
+          .from('emergency_contacts')
+          .select('*')
+          .in('student_id', studentIds)
+      ]);
+
+      if (guardiansRes.data) {
+        guardiansRes.data.forEach((item: any) => {
+          if (!guardiansMap[item.student_id]) guardiansMap[item.student_id] = [];
+          if (item.guardians) guardiansMap[item.student_id].push(item.guardians);
+        });
+      }
+
+      if (emergencyRes.data) {
+        emergencyRes.data.forEach((contact: any) => {
+          if (!emergencyMap[contact.student_id]) emergencyMap[contact.student_id] = [];
+          emergencyMap[contact.student_id].push(contact);
+        });
+      }
+    }
+
+    const students = rawStudents.map((s: any) => {
+      const studentGuardians = guardiansMap[s.id] || [];
+      const studentEmergency = emergencyMap[s.id] || [];
+      const primaryGuardian = studentGuardians[0] || null;
+      const primaryEmergency = studentEmergency.find((c: any) => c.is_main) || studentEmergency[0] || null;
+      const hasMedicalAlert = !!(s.medical_restrictions || s.allergies || s.medications);
+      const authorizedPickupCount = studentEmergency.filter((c: any) => c.authorized_pickup).length;
+
+      return {
         ...s,
-        shirtNumber: s.shirt_number
-      }));
+        shirtNumber: s.shirt_number,
+        dominantFoot: s.dominant_foot,
+        medicalRestrictions: s.medical_restrictions,
+        enrolledAt: s.enrolled_at,
+        guardians: studentGuardians,
+        primaryGuardian,
+        emergencyContacts: studentEmergency,
+        primaryEmergencyContact: primaryEmergency,
+        hasMedicalAlert,
+        authorizedPickupCount
+      };
+    });
 
     return {
       ...classData,
@@ -81,7 +147,11 @@ export class ClassService {
       daysOfWeek: classData.days_of_week,
       startTime: classData.start_time,
       endTime: classData.end_time,
+      teacher: classData.teachers || null,
       teacherName: classData.teachers?.name || 'Sem Professor',
+      teacherEmail: classData.teachers?.email || null,
+      teacherPhone: classData.teachers?.phone || null,
+      teacherCref: classData.teachers?.cref || null,
       enrolledCount: students.length,
       availableSlots: Math.max(0, classData.capacity - students.length),
       isFull: students.length >= classData.capacity,
@@ -89,17 +159,105 @@ export class ClassService {
     };
   }
 
+  async updateClass(classId: string, schoolId: string, data: any, updatedBy: string) {
+    // 1. Verificar se a turma pertence à escola
+    const { data: existingClass, error: findError } = await supabaseAdmin
+      .from('classes')
+      .select('id, name, school_id, teacher_id')
+      .eq('id', classId)
+      .single();
+
+    if (findError || !existingClass) {
+      throw new Error('Turma não encontrada');
+    }
+
+    if (existingClass.school_id !== schoolId) {
+      throw new Error('Acesso negado: Turma de outra instituição');
+    }
+
+    // 2. Montar objeto de atualização
+    const updateRecord: any = {};
+
+    if (data.teacherId !== undefined || data.teacher_id !== undefined) {
+      const rawTeacher = data.teacherId !== undefined ? data.teacherId : data.teacher_id;
+      updateRecord.teacher_id = (rawTeacher && typeof rawTeacher === 'string' && rawTeacher.trim()) ? rawTeacher.trim() : null;
+    }
+
+    if (data.name !== undefined) updateRecord.name = data.name.trim();
+    if (data.category !== undefined) updateRecord.category = data.category;
+    if (data.daysOfWeek !== undefined) updateRecord.days_of_week = data.daysOfWeek;
+    if (data.days_of_week !== undefined) updateRecord.days_of_week = data.days_of_week;
+    if (data.startTime !== undefined) updateRecord.start_time = data.startTime;
+    if (data.start_time !== undefined) updateRecord.start_time = data.start_time;
+    if (data.endTime !== undefined) updateRecord.end_time = data.endTime;
+    if (data.end_time !== undefined) updateRecord.end_time = data.end_time;
+    if (data.location !== undefined) updateRecord.location = data.location.trim();
+    if (data.capacity !== undefined) updateRecord.capacity = Number(data.capacity);
+    if (data.status !== undefined) updateRecord.status = data.status;
+
+    const { data: updatedClass, error: updateError } = await supabaseAdmin
+      .from('classes')
+      .update(updateRecord)
+      .eq('id', classId)
+      .select(`
+        *,
+        teachers (
+          id,
+          name,
+          email,
+          phone,
+          cref
+        )
+      `)
+      .single();
+
+    if (updateError || !updatedClass) {
+      console.error('Erro ao atualizar turma:', updateError);
+      throw new Error(`Falha ao atualizar turma: ${updateError?.message}`);
+    }
+
+    // 3. Auditoria (Integridade e Rastreabilidade CID)
+    await supabaseAdmin.from('audit_logs').insert([{
+      school_id: schoolId,
+      user_id: updatedBy,
+      action: 'ATUALIZAR_TURMA',
+      resource: `Turma: ${updatedClass.name}`,
+      details: {
+        classId,
+        updatedFields: Object.keys(updateRecord),
+        teacherId: updatedClass.teacher_id,
+        teacherName: updatedClass.teachers?.name || 'Sem Professor'
+      }
+    }]);
+
+    return {
+      ...updatedClass,
+      schoolId: updatedClass.school_id,
+      teacherId: updatedClass.teacher_id,
+      daysOfWeek: updatedClass.days_of_week,
+      startTime: updatedClass.start_time,
+      endTime: updatedClass.end_time,
+      teacher: updatedClass.teachers || null,
+      teacherName: updatedClass.teachers?.name || 'Sem Professor'
+    };
+  }
+
   async createClass(schoolId: string, data: any, createdBy: string) {
+    const rawTeacher = data.teacherId || data.teacher_id;
+    const days = data.daysOfWeek || data.days_of_week;
+    const start = data.startTime || data.start_time;
+    const end = data.endTime || data.end_time;
+
     const classRecord = {
       school_id: schoolId,
-      teacher_id: data.teacherId || null,
-      name: data.name,
+      teacher_id: (rawTeacher && typeof rawTeacher === 'string' && rawTeacher.trim()) ? rawTeacher.trim() : null,
+      name: data.name.trim(),
       category: data.category,
-      days_of_week: data.daysOfWeek,
-      start_time: data.startTime,
-      end_time: data.endTime,
-      location: data.location || 'Campo Principal',
-      capacity: data.capacity || 25,
+      days_of_week: days,
+      start_time: start,
+      end_time: end,
+      location: (data.location && data.location.trim()) ? data.location.trim() : 'Campo Principal',
+      capacity: Number(data.capacity) || 25,
       status: data.status || 'ATIVO'
     };
 
