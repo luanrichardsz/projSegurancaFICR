@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // -------------------------------------------------------------------------
+    // BASE FC - RESTRICTED FIRESTORE RULES
+    // -------------------------------------------------------------------------
+    // Architecture Note:
+    // This application uses a Node.js (Express) backend to orchestrate all
+    // database interactions using the Firebase Admin SDK.
+    // The Admin SDK bypasses these security rules by design.
+    // To enforce maximum security (Confidentiality, Integrity, Availability),
+    // we STRICTLY FORBID all direct client-side (web/mobile SDK) access to
+    // the database. All operations must pass through the Express API where
+    // RBAC, IDOR protection, and Zod schema validation are enforced.
+    // -------------------------------------------------------------------------
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

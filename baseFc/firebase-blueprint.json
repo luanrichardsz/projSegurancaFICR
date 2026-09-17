@@ -1,0 +1,224 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user (Manager, Teacher, Guardian)",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["GESTOR", "PROFESSOR", "RESPONSAVEL"] },
+        "schoolId": { "type": "string" },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "School": {
+      "title": "School",
+      "description": "Football school tenant",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Football student/athlete",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "cpf": { "type": "string", "pattern": "^\\d{11}$" },
+        "dob": { "type": "string", "format": "date" },
+        "category": { "type": "string" },
+        "position": { "type": "string" },
+        "dominantFoot": { "type": "string", "enum": ["DIREITO", "ESQUERDO", "AMBIDESTRO"] },
+        "shirtNumber": { "type": "number" },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO", "TRANCADO"] },
+        "enrolledAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["schoolId", "name", "cpf", "status"]
+    },
+    "Guardian": {
+      "title": "Guardian",
+      "description": "Student guardian",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string" },
+        "cpf": { "type": "string" },
+        "phone": { "type": "string" },
+        "studentIds": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "schoolId", "name"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Class teacher/coach",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "required": ["userId", "schoolId", "name"]
+    },
+    "Class": {
+      "title": "Class",
+      "description": "Training class/group",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "daysOfWeek": { "type": "array", "items": { "type": "string" } },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "location": { "type": "string" },
+        "capacity": { "type": "number" },
+        "studentIds": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["ATIVO", "INATIVO"] }
+      },
+      "required": ["schoolId", "teacherId", "name", "capacity"]
+    },
+    "EmergencyContact": {
+      "title": "Emergency Contact",
+      "description": "Emergency contact for a student",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "name": { "type": "string" },
+        "relationship": { "type": "string" },
+        "phone": { "type": "string" },
+        "isMain": { "type": "boolean" },
+        "authorizedPickup": { "type": "boolean" },
+        "notes": { "type": "string" }
+      },
+      "required": ["studentId", "name", "phone"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Monthly payment record",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["PENDENTE", "PAGO", "ATRASADO", "CANCELADO"] },
+        "paymentMethod": { "type": "string" },
+        "paidAt": { "type": "string", "format": "date-time" },
+        "competence": { "type": "string" }
+      },
+      "required": ["studentId", "amount", "dueDate", "status"]
+    },
+    "TrainingEvent": {
+      "title": "Training Event",
+      "description": "Calendar event or match",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "classId": { "type": "string" },
+        "type": { "type": "string", "enum": ["TREINO", "AMISTOSO", "CAMPEONATO", "EVENTO"] },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["schoolId", "type", "title", "date"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Student attendance record",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["PRESENTE", "AUSENTE", "JUSTIFICADO"] },
+        "recordedBy": { "type": "string" }
+      },
+      "required": ["classId", "studentId", "date", "status", "recordedBy"]
+    },
+    "Notice": {
+      "title": "Notice",
+      "description": "System notices/announcements",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "targetRole": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["schoolId", "title", "content"]
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "Security audit logs",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string" },
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "resource": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["schoolId", "userId", "action", "resource", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles and RBAC roles"
+    },
+    "/schools/{schoolId}": {
+      "schema": { "$ref": "#/entities/School" },
+      "description": "School tenants"
+    },
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Student records"
+    },
+    "/guardians/{guardianId}": {
+      "schema": { "$ref": "#/entities/Guardian" },
+      "description": "Guardian records linking to students"
+    },
+    "/teachers/{teacherId}": {
+      "schema": { "$ref": "#/entities/Teacher" },
+      "description": "Teacher records"
+    },
+    "/classes/{classId}": {
+      "schema": { "$ref": "#/entities/Class" },
+      "description": "Class definitions"
+    },
+    "/emergency_contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/EmergencyContact" },
+      "description": "Emergency contacts for students"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/Payment" },
+      "description": "Monthly payments"
+    },
+    "/training_events/{eventId}": {
+      "schema": { "$ref": "#/entities/TrainingEvent" },
+      "description": "Training and match events"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/Attendance" },
+      "description": "Attendance tracking"
+    },
+    "/notices/{noticeId}": {
+      "schema": { "$ref": "#/entities/Notice" },
+      "description": "Announcements"
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "System audit logs"
+    }
+  }
+}
