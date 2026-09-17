@@ -18,7 +18,7 @@ export class StudentController {
       return res.status(201).json(newStudent);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+        return res.status(400).json({ error: 'Dados inválidos', details: error.issues || (error as any).errors });
       }
       next(error);
     }
@@ -38,7 +38,8 @@ export class StudentController {
 
   async getOne(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const student = await studentService.getStudentById(req.params.id);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const student = await studentService.getStudentById(id);
       return res.json(student);
     } catch (error) {
       next(error);

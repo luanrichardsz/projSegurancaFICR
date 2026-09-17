@@ -1,9 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { adminAuth, db } from '../config/firebase-admin.ts';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import { supabaseAdmin } from '../config/supabase.ts';
+import { User } from '@supabase/supabase-js';
+
+export interface AuthUser {
+  uid: string;
+  email?: string;
+  role: string;
+  schoolId: string | null;
+  rawUser?: User;
+}
 
 export interface AuthRequest extends Request {
-  user?: DecodedIdToken & { role?: string; schoolId?: string; uid: string };
+  user?: AuthUser;
 }
 
 export const requireAuth = async (
@@ -18,25 +26,30 @@ export const requireAuth = async (
 
   const token = authHeader.split('Bearer ')[1];
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
     
-    // Buscar perfil do usuário no Firestore (Role, School)
-    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
-    let customClaims = {};
-    if (userDoc.exists) {
-      customClaims = userDoc.data() || {};
+    if (error || !user) {
+      return res.status(401).json({ error: 'Não autorizado: Token inválido ou expirado.' });
     }
 
-    req.user = { 
-      ...decodedToken, 
-      uid: decodedToken.uid,
-      role: customClaims.role || 'RESPONSAVEL', 
-      schoolId: customClaims.schoolId || null 
+    // Buscar perfil do usuário no banco (Role, School)
+    const { data: profile } = await supabaseAdmin
+      .from('users')
+      .select('role, school_id')
+      .eq('id', user.id)
+      .single();
+
+    req.user = {
+      uid: user.id,
+      email: user.email,
+      role: profile?.role || user.user_metadata?.role || 'RESPONSAVEL',
+      schoolId: profile?.school_id || user.user_metadata?.schoolId || null,
+      rawUser: user,
     };
-    
+
     next();
   } catch (error) {
-    console.error('Error verifying Firebase ID token:', error);
-    return res.status(401).json({ error: 'Não autorizado: Token inválido ou expirado.' });
+    console.error('Erro ao verificar token do Supabase:', error);
+    return res.status(401).json({ error: 'Não autorizado: Falha na validação do token.' });
   }
 };

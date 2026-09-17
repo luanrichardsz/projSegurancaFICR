@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -11,13 +12,22 @@ import studentRoutes from './src/backend/routes/student.routes.ts';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
-  // Segurança (CID)
+  // Segurança (Tríade CID)
   app.use(helmet({
-    contentSecurityPolicy: false // Necessário no ambiente de dev do Vite
+    contentSecurityPolicy: false // Necessário no ambiente de dev do Vite e SPA
   }));
-  app.use(cors());
+
+  // CORS: Suporte para chamada local ou via Vercel
+  const allowedOrigins = process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : true;
+
+  app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+  }));
   app.use(bodyParser.json());
 
   // Rate Limiting para prevenir DDoS/Brute Force (Disponibilidade)
@@ -31,7 +41,7 @@ async function startServer() {
   app.use('/api', limiter);
 
   // Rotas da API
-  app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+  app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'Base FC API', timestamp: new Date() }));
   app.use('/api/students', studentRoutes);
 
   // Middleware Global de Tratamento de Erros
@@ -47,16 +57,13 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    // Em express v5 é *all, mas o package.json tem express 5.x. Vamos usar *all ou uma rota customizada.
-    // O usuário instalou express 5.2.1, então a sintaxe é '*' ou '/(.*)'?
-    // "Note the Express version of the app. In Express v4, use app.get('*', ...), but in Express v5, you must use app.get('*all', ...)"
     app.get('*all', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
   });
 }
 

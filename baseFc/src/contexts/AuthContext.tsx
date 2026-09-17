@@ -1,14 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, User, onAuthStateChanged, getIdTokenResult } from 'firebase/auth';
-import firebaseConfig from '../../firebase-applet-config.json';
-
-// Inicializa Firebase no Frontend
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
-const auth = getAuth();
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../services/supabase.ts';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +8,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -28,16 +21,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        const t = await firebaseUser.getIdToken();
-        setToken(t);
-        // Em um sistema real, decodificaríamos o JWT para obter a role injetada
-        // ou faríamos um fetch rápido em /api/auth/me
-        // Para simplificar a simulação no frontend:
-        const tokenResult = await getIdTokenResult(firebaseUser);
-        setRole((tokenResult.claims.role as string) || 'GESTOR'); // Mock para testes iniciais
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          setToken(session.access_token);
+          
+          try {
+            const { data } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+            setRole(data?.role || session.user.user_metadata?.role || 'GESTOR');
+          } catch {
+            setRole(session.user.user_metadata?.role || 'GESTOR');
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+          setRole(null);
+        }
+      } catch (err) {
+        console.error('Erro ao inicializar sessão:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setToken(session.access_token);
+        
+        try {
+          const { data } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          setRole(data?.role || session.user.user_metadata?.role || 'GESTOR');
+        } catch {
+          setRole(session.user.user_metadata?.role || 'GESTOR');
+        }
       } else {
         setUser(null);
         setToken(null);
@@ -45,17 +76,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password: pass,
+    });
+    if (error) throw error;
   };
 
-  const logout = () => signOut(auth);
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) throw error;
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
-    <AuthContext.Provider value={{ user, role, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, role, token, loading, login, loginWithGoogle, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

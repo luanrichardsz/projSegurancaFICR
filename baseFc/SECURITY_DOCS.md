@@ -1,25 +1,34 @@
 # Documentação de Segurança - Tríade CID
 
-O projeto acadêmico **Base FC** foi desenvolvido mitigando vulnerabilidades comuns listadas na OWASP Top 10 e seguindo a tríade fundamental da segurança da informação.
+O projeto acadêmico **Base FC** foi desenvolvido mitigando vulnerabilidades comuns listadas na OWASP Top 10 e seguindo a tríade fundamental da segurança da informação, utilizando **Supabase (PostgreSQL)** e **Node.js (Express)**.
+
+---
 
 ## 1. Confidencialidade (Confidentiality)
 Garantimos que apenas usuários autorizados tenham acesso aos dados.
 
-- **Autenticação**: Gerida pelo Firebase Auth, utilizando tokens JWT assinados criptograficamente.
-- **Autorização (RBAC)**: O middleware `requireRole` (`src/backend/middlewares/rbac.middleware.ts`) assegura que o token pertença a uma Role autorizada a acessar o endpoint.
-- **Proteção IDOR (Insecure Direct Object Reference)**: Um middleware específico (`checkStudentAccess` em `src/backend/middlewares/idor.middleware.ts`) intercepta todas as requisições envolvendo recursos parametrizados (ex: `GET /api/students/:id`). Ele vai até o banco, avalia a quem o dado pertence, e cruza com a identidade e o perfil (`schoolId`, `role`) de quem o requisita, retornando `HTTP 403` quando necessário.
-- **Senhas e Segredos**: Senhas nunca são armazenadas em texto puro (o Firebase gerencia o hash usando algoritmos fortificados baseados em scrypt). As chaves de serviço ficam encapsuladas nas variáveis de ambiente.
+- **Autenticação**: Gerida pelo Supabase Auth com tokens JWT assinados criptograficamente. O backend valida a assinatura e a validade de cada requisição via `supabaseAdmin.auth.getUser(token)`.
+- **Autorização (RBAC)**: O middleware `requireRole` (`src/backend/middlewares/rbac.middleware.ts`) assegura que o token pertença a um perfil com permissão explícita para o endpoint (`GESTOR`, `PROFESSOR`, `RESPONSAVEL`).
+- **Proteção IDOR (Insecure Direct Object Reference)**: O middleware `checkStudentAccess` (`src/backend/middlewares/idor.middleware.ts`) intercepta requisições parametrizadas (ex: `GET /api/students/:id`). Ele consulta o PostgreSQL no Supabase para certificar que o registro pertence à mesma escola do Gestor, à turma do Professor ou ao filho do Responsável solicitante, devolvendo `HTTP 403` em qualquer divergência.
+- **Row Level Security (RLS)**: Todas as tabelas no Supabase possuem RLS ativado (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`). O acesso direto do cliente é restrito ao próprio perfil, enquanto o Backend atua como barreira com chave segura de serviço (`service_role`).
+- **Isolamento de Segredos**: A `SUPABASE_SERVICE_ROLE_KEY` nunca é exposta no frontend, permanecendo exclusiva das variáveis de ambiente do backend.
+
+---
 
 ## 2. Integridade (Integrity)
-Garantimos que a informação só será alterada de forma legítima e consistente.
+Garantimos que a informação só será alterada de forma legítima, consistente e auditável.
 
-- **Validação no Backend**: O Frontend não é confiável. O Express utiliza o Zod (`src/backend/validators/student.validator.ts`) para forçar um schema de dados rígido antes de qualquer gravação no banco.
-- **Auditoria de Ações**: Modificações sensíveis criam rastros inalteráveis. O método `createStudent` injeta automaticamente um registro na coleção `audit_logs`, registrando `quem`, `o que`, `quando` e `onde` a operação foi feita.
-- **Isolamento de Banco**: A regra de negócio não está na camada visual. Toda persistência passa pelo Backend que valida os vínculos de IDs de escola (multi-tenant) e turmas.
+- **Validação no Backend**: O Express utiliza Zod (`src/backend/validators/student.validator.ts`) para exigir validação estrita de formatos (como CPF e datas) antes de qualquer persistência.
+- **Auditoria de Ações (Audit Logs)**: Qualquer modificação ou cadastro sensível gera um registro inalterável na tabela `audit_logs` no PostgreSQL, gravando `quem` realizou, `qual` ação, `qual` recurso e `quando` ocorreu (`timestamp`).
+- **Integridade Referencial com PostgreSQL**: O banco impõe integridade através de chaves primárias UUID, chaves estrangeiras (`REFERENCES schools(id) ON DELETE CASCADE`) e constraints `CHECK`.
+- **Multi-tenancy Rígido**: O vínculo com a escola (`school_id`) é extraído diretamente da sessão do usuário autenticado no backend, impedindo adulteração de IDs pelo cliente.
+
+---
 
 ## 3. Disponibilidade (Availability)
-O sistema deve se manter operante, estável e resiliente contra ataques.
+O sistema deve se manter operante, estável e resiliente contra ataques e sobrecargas.
 
-- **Rate Limiting**: A biblioteca `express-rate-limit` restringe requisições no endpoint da API (máx. 100 reqs / 15 min por IP) prevenindo ataques de Força Bruta e DDoS de baixa complexidade.
-- **Tratamento de Erros Global**: O middleware `error.middleware.ts` intercepta exceções, loga o stack trace internamente no servidor, mas devolve ao cliente apenas um `HTTP 500` genérico. Isso impede o vazamento de configurações internas ou query structures que atacantes poderiam explorar.
-- **Segurança de Cabeçalho (Helmet)**: A biblioteca `helmet` configura headers essenciais contra Clickjacking e Sniffing de MIME-Type.
+- **Rate Limiting**: O middleware `express-rate-limit` restringe requisições no endpoint da API (máx. 100 requisições por janela de 15 minutos por IP) prevenindo ataques de Força Bruta e sobrecarga.
+- **Tratamento de Erros Global**: O middleware `error.middleware.ts` captura falhas de execução, registra detalhes internamente no console do servidor, mas retorna apenas uma resposta genérica `HTTP 500`. Isso impede o vazamento de configurações internas, stack traces ou esquemas SQL que poderiam ser explorados em ataques.
+- **Proteção de Cabeçalhos HTTP (Helmet)**: A biblioteca `helmet` configura cabeçalhos essenciais contra Clickjacking, X-Frame-Options e MIME-sniffing.
+- **Deploy Resiliente na Nuvem**: Arquitetura desacoplada com backend hospedado no **Render** e frontend estático distribuído globalmente pela **Vercel**.
