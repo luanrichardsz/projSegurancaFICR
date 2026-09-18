@@ -12,8 +12,22 @@
   }
 }
 
-html, body {
+html, body, #root {
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
-  max-width: 100vw;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+

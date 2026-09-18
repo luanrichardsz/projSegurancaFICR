@@ -237,78 +237,135 @@ export const Auditoria = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50/80 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4">Data / Hora</th>
-                  <th className="px-6 py-4">Operador (Quem)</th>
-                  <th className="px-6 py-4">Ação Executada</th>
-                  <th className="px-6 py-4">Recurso Afetado</th>
-                  <th className="px-6 py-4">Detalhes da Transação</th>
-                  <th className="px-6 py-4 text-right">Auditar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredLogs.map(log => {
-                  const operatorEmail = log.user?.email || log.userEmail || 'Sistema';
-                  const operatorRole = log.user?.role || log.userRole || 'GESTOR';
-                  const logDate = log.created_at || log.timestamp;
+          <>
+            {/* Visualização Mobile: Cards Individuais de Auditoria */}
+            <div className="block md:hidden divide-y divide-gray-100">
+              {filteredLogs.map(log => {
+                const operatorEmail = log.user?.email || log.userEmail || 'Sistema';
+                const operatorRole = log.user?.role || log.userRole || 'GESTOR';
+                const logDate = log.created_at || log.timestamp;
 
-                  return (
-                    <tr key={log.id} className="hover:bg-emerald-50/30 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
-                        {formatDate(logDate)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold">
-                            <User className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-gray-900">{operatorEmail}</p>
-                            <p className="text-2xs text-gray-400 uppercase">{operatorRole}</p>
-                          </div>
+                return (
+                  <div key={log.id} className="p-4 space-y-3 hover:bg-emerald-50/20 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold shrink-0">
+                          <User className="w-4 h-4" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 text-2xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-mono text-gray-700">
-                        {log.resource}
-                      </td>
-                      <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
-                        {log.details ? (
-                          <span>
-                            {log.details.name ? `Nome: ${log.details.name} ` : ''}
-                            {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
-                            {log.details.category ? `Cat: ${log.details.category} ` : ''}
-                            {log.details.amount ? `R$ ${log.details.amount} ` : ''}
-                            {log.details.paymentMethod || log.details.payment_method ? `Método: ${log.details.paymentMethod || log.details.payment_method} ` : ''}
-                            {log.details.capacity ? `Vagas: ${log.details.capacity} ` : ''}
-                            {log.details.status ? `Status: ${log.details.status} ` : ''}
-                            {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.capacity && !log.details.category ? JSON.stringify(log.details) : ''}
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-gray-900 truncate">{operatorEmail}</p>
+                          <p className="text-3xs text-gray-400 uppercase font-semibold">{operatorRole} • {formatDate(logDate)}</p>
+                        </div>
+                      </div>
+
+                      <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-3xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
+                        {log.action}
+                      </span>
+                    </div>
+
+                    <div className="bg-gray-50 p-2.5 rounded-xl space-y-1 text-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 font-semibold">Recurso:</span>
+                        <span className="font-mono text-gray-800 font-bold">{log.resource}</span>
+                      </div>
+                      {log.details && (
+                        <div className="text-gray-600 truncate pt-1 border-t border-gray-200/60">
+                          {log.details.name ? `Nome: ${log.details.name} ` : ''}
+                          {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
+                          {log.details.category ? `Cat: ${log.details.category} ` : ''}
+                          {log.details.amount ? `R$ ${log.details.amount} ` : ''}
+                          {log.details.paymentMethod || log.details.payment_method ? `Método: ${log.details.paymentMethod || log.details.payment_method} ` : ''}
+                          {log.details.status ? `Status: ${log.details.status} ` : ''}
+                          {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.status ? 'Payload registrado' : ''}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedLog(log)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-900 font-bold px-3 py-2 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-200/60 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Inspecionar Evidência
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Visualização Desktop: Tabela Completa */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50/80 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4">Data / Hora</th>
+                    <th className="px-6 py-4">Operador (Quem)</th>
+                    <th className="px-6 py-4">Ação Executada</th>
+                    <th className="px-6 py-4">Recurso Afetado</th>
+                    <th className="px-6 py-4">Detalhes da Transação</th>
+                    <th className="px-6 py-4 text-right">Auditar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredLogs.map(log => {
+                    const operatorEmail = log.user?.email || log.userEmail || 'Sistema';
+                    const operatorRole = log.user?.role || log.userRole || 'GESTOR';
+                    const logDate = log.created_at || log.timestamp;
+
+                    return (
+                      <tr key={log.id} className="hover:bg-emerald-50/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
+                          {formatDate(logDate)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold">
+                              <User className="w-3.5 h-3.5" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-gray-900">{operatorEmail}</p>
+                              <p className="text-2xs text-gray-400 uppercase">{operatorRole}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-1 text-2xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
+                            {log.action}
                           </span>
-                        ) : (
-                          <span className="text-gray-400 italic">Sem payload</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => setSelectedLog(log)}
-                          className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> Detalhes
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-mono text-gray-700">
+                          {log.resource}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
+                          {log.details ? (
+                            <span>
+                              {log.details.name ? `Nome: ${log.details.name} ` : ''}
+                              {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
+                              {log.details.category ? `Cat: ${log.details.category} ` : ''}
+                              {log.details.amount ? `R$ ${log.details.amount} ` : ''}
+                              {log.details.paymentMethod || log.details.payment_method ? `Método: ${log.details.paymentMethod || log.details.payment_method} ` : ''}
+                              {log.details.capacity ? `Vagas: ${log.details.capacity} ` : ''}
+                              {log.details.status ? `Status: ${log.details.status} ` : ''}
+                              {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.capacity && !log.details.category ? JSON.stringify(log.details) : ''}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 italic">Sem payload</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => setSelectedLog(log)}
+                            className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Detalhes
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

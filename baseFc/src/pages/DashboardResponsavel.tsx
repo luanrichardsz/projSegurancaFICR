@@ -128,7 +128,7 @@ export const DashboardResponsavel = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       {/* Banner de Boas-Vindas */}
       <div className="relative overflow-hidden bg-gradient-to-r from-[#112F20] via-[#143B27] to-[#1E4D36] p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -151,7 +151,7 @@ export const DashboardResponsavel = () => {
 
           {/* Seletor de Atletas (caso o pai tenha mais de 1 filho) */}
           {students.length > 1 && (
-            <div className="bg-black/25 backdrop-blur-xs p-2.5 rounded-2xl border border-white/10 shrink-0 max-w-full overflow-x-auto">
+            <div className="bg-black/25 backdrop-blur-xs p-2.5 rounded-2xl border border-white/10 w-full lg:w-auto min-w-0 max-w-full overflow-x-auto no-scrollbar">
               <p className="text-2xs font-bold text-emerald-300 uppercase px-1 mb-1.5">Selecione o Atleta</p>
               <div className="flex gap-2">
                 {students.map((st, idx) => (
@@ -224,7 +224,7 @@ export const DashboardResponsavel = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Coluna 1: Frequência nos Treinos */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export const DashboardResponsavel = () => {
         </div>
 
         {/* Coluna 2: Turma & Horários */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
@@ -463,7 +463,7 @@ export const DashboardResponsavel = () => {
         </div>
 
         {/* Coluna 3: Mensalidades & Situação Financeira */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div className="flex items-center gap-2">

@@ -66,7 +66,7 @@ export const DefinirSenha = () => {
 
   return (
     <div className="min-h-screen bg-[#112F20] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header com Logo */}
         <div className="flex flex-col items-center mb-6 text-center">

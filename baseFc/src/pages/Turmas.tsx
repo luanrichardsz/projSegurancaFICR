@@ -786,7 +786,7 @@ export const Turmas = () => {
                         <select
                           value={detailTeacherId}
                           onChange={e => setDetailTeacherId(e.target.value)}
-                          className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-medium text-gray-800 focus:outline-none focus:border-emerald-600 min-w-[220px]"
+                          className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-medium text-gray-800 focus:outline-none focus:border-emerald-600 w-full sm:w-auto sm:min-w-[200px]"
                         >
                           <option value="">-- Sem Professor Atribuído --</option>
                           {teachers.map(t => (

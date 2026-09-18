@@ -36,7 +36,7 @@ export const DashboardGestor = () => {
   }, [token]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 w-full max-w-full">
       {/* Welcome Banner */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-gradient-to-r from-[#112F20] to-[#1E4D36] p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl">
         <div>
@@ -104,7 +104,7 @@ export const DashboardGestor = () => {
       {/* Main Grid: Próximos Treinos & Resumo Financeiro */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Próximos Treinos */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-xs border border-gray-100 p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-xs border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Turmas e Treinos</h2>
@@ -149,7 +149,7 @@ export const DashboardGestor = () => {
         </div>
 
         {/* Resumo Financeiro */}
-        <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-6 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-4 sm:p-6 flex flex-col justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">Status de Cobranças</h2>
             <p className="text-xs text-gray-500 mb-4">Distribuição das mensalidades</p>
