@@ -234,6 +234,79 @@ export class ClassService {
     return null;
   }
 
+  async checkStudentScheduleConflict(
+    schoolId: string,
+    studentId: string,
+    targetClassId: string,
+    daysOfWeek: string[],
+    startTime: string,
+    endTime: string
+  ) {
+    if (!daysOfWeek || daysOfWeek.length === 0 || !startTime || !endTime) {
+      return null;
+    }
+
+    const newStart = startTime.slice(0, 5);
+    const newEnd = endTime.slice(0, 5);
+
+    // 1. Buscar todas as turmas ativas em que o aluno já está matriculado
+    const { data: studentClassesData, error } = await supabaseAdmin
+      .from('class_students')
+      .select(`
+        class_id,
+        classes (
+          id,
+          name,
+          days_of_week,
+          start_time,
+          end_time,
+          status,
+          school_id
+        )
+      `)
+      .eq('student_id', studentId);
+
+    if (error) {
+      console.error('Erro ao verificar turmas do atleta:', error);
+      throw new Error('Falha ao verificar horários do atleta');
+    }
+
+    const enrolledClasses = (studentClassesData || [])
+      .map((sc: any) => sc.classes)
+      .filter((c: any) => c && c.status !== 'INATIVO' && c.id !== targetClassId);
+
+    for (const existing of enrolledClasses) {
+      const existingDays: string[] = existing.days_of_week || [];
+      const commonDays = daysOfWeek.filter(day => existingDays.includes(day));
+
+      if (commonDays.length > 0) {
+        const existStart = (existing.start_time || '').slice(0, 5);
+        const existEnd = (existing.end_time || '').slice(0, 5);
+
+        // Sobreposição de intervalos: newStart < existEnd && existStart < newEnd
+        const isOverlapping = (newStart < existEnd) && (existStart < newEnd);
+
+        if (isOverlapping) {
+          const { data: studentData } = await supabaseAdmin
+            .from('students')
+            .select('name')
+            .eq('id', studentId)
+            .single();
+          const studentName = studentData?.name ? `O atleta "${studentData.name}"` : 'O atleta';
+
+          const err: any = new Error(
+            `Conflito de horário: ${studentName} já possui aula na turma "${existing.name}" ` +
+            `nos dias [${commonDays.join(', ')}] das ${existStart} às ${existEnd}. Não é permitido matricular em mais de uma turma no mesmo horário.`
+          );
+          err.statusCode = 400;
+          throw err;
+        }
+      }
+    }
+
+    return null;
+  }
+
   async updateClass(classId: string, schoolId: string, data: any, updatedBy: string) {
     // 1. Verificar se a turma pertence à escola
     const { data: existingClass, error: findError } = await supabaseAdmin
@@ -285,6 +358,32 @@ export class ClassService {
         effectiveEnd,
         classId
       );
+    }
+
+    // 4. Validar se a alteração de horário gera conflito para alunos já matriculados
+    const isScheduleChanged = 
+      updateRecord.days_of_week !== undefined || 
+      updateRecord.start_time !== undefined || 
+      updateRecord.end_time !== undefined;
+
+    if (isScheduleChanged) {
+      const { data: enrolledStudents } = await supabaseAdmin
+        .from('class_students')
+        .select('student_id')
+        .eq('class_id', classId);
+
+      if (enrolledStudents && enrolledStudents.length > 0) {
+        for (const es of enrolledStudents) {
+          await this.checkStudentScheduleConflict(
+            schoolId,
+            es.student_id,
+            classId,
+            effectiveDays,
+            effectiveStart,
+            effectiveEnd
+          );
+        }
+      }
     }
 
     const { data: updatedClass, error: updateError } = await supabaseAdmin
@@ -391,7 +490,7 @@ export class ClassService {
     // 1. Buscar a turma e validar capacidade máxima
     const { data: targetClass, error: classErr } = await supabaseAdmin
       .from('classes')
-      .select('id, name, capacity, school_id')
+      .select('id, name, capacity, school_id, days_of_week, start_time, end_time')
       .eq('id', classId)
       .single();
 
@@ -435,7 +534,17 @@ export class ClassService {
       throw err;
     }
 
-    // 3. Efetuar a matrícula
+    // 3. Validar se há conflito de horário com outras turmas do aluno
+    await this.checkStudentScheduleConflict(
+      schoolId,
+      studentId,
+      targetClass.id,
+      targetClass.days_of_week,
+      targetClass.start_time,
+      targetClass.end_time
+    );
+
+    // 4. Efetuar a matrícula
     const { error: insertErr } = await supabaseAdmin
       .from('class_students')
       .insert([{

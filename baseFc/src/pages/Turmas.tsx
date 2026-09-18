@@ -171,9 +171,49 @@ export const Turmas = () => {
     }
   };
 
+  // Helper para verificar conflito de horário do atleta com a turma aberta
+  const getStudentScheduleConflict = (student: any) => {
+    if (!selectedClassDetail || !selectedClassDetail.days_of_week || !selectedClassDetail.start_time || !selectedClassDetail.end_time) {
+      return null;
+    }
+    const targetStart = (selectedClassDetail.start_time || '').slice(0, 5);
+    const targetEnd = (selectedClassDetail.end_time || '').slice(0, 5);
+    const targetDays: string[] = selectedClassDetail.days_of_week || [];
+
+    for (const cl of (student.classes || [])) {
+      if (!cl || cl.id === selectedClassDetail.id || cl.status === 'INATIVO') continue;
+      const clDays: string[] = cl.days_of_week || cl.daysOfWeek || [];
+      const commonDays = targetDays.filter(d => clDays.includes(d));
+      if (commonDays.length > 0) {
+        const clStart = (cl.start_time || cl.startTime || '').slice(0, 5);
+        const clEnd = (cl.end_time || cl.endTime || '').slice(0, 5);
+        if (targetStart < clEnd && clStart < targetEnd) {
+          return {
+            className: cl.name,
+            commonDays,
+            time: `${clStart} às ${clEnd}`
+          };
+        }
+      }
+    }
+    return null;
+  };
+
   // Enroll student from Deep Class View
   const handleEnrollInDetail = async () => {
     if (!selectedClassDetail || !selectedStudentToEnroll) return;
+
+    // Pré-validação de conflito de agenda no client
+    const studentObj = availableStudents.find(s => s.id === selectedStudentToEnroll);
+    const conflict = studentObj ? getStudentScheduleConflict(studentObj) : null;
+    if (conflict) {
+      setEnrollError(
+        `Conflito de horário: O atleta "${studentObj?.name}" já possui aula na turma "${conflict.className}" ` +
+        `nos dias [${conflict.commonDays.join(', ')}] das ${conflict.time}. Não é permitido matricular no mesmo horário.`
+      );
+      return;
+    }
+
     try {
       setEnrollLoading(true);
       setEnrollError('');
@@ -829,11 +869,15 @@ export const Turmas = () => {
                       {availableStudents.length === 0 ? (
                         <option value="">Nenhum atleta ativo disponível para matrícula</option>
                       ) : (
-                        availableStudents.map(s => (
-                          <option key={s.id} value={s.id}>
-                            {s.name} ({s.category || 'Geral'}) - Camisa #{s.shirt_number || s.shirtNumber || 'S/N'}
-                          </option>
-                        ))
+                        availableStudents.map(s => {
+                          const conflict = getStudentScheduleConflict(s);
+                          return (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.category || 'Geral'}) - Camisa #{s.shirt_number || s.shirtNumber || 'S/N'}
+                              {conflict ? ` ⚠️ [Conflito: ${conflict.className} (${conflict.commonDays.join(', ')} ${conflict.time})]` : ''}
+                            </option>
+                          );
+                        })
                       )}
                     </select>
 
