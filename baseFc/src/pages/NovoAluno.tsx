@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -10,6 +10,7 @@ export const NovoAluno = () => {
   const navigate = useNavigate();
   const [classes, setClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -74,6 +75,7 @@ export const NovoAluno = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || submittingRef.current) return;
     setError('');
 
     // Validações de Consistência e Integridade (OWASP Input Validation)
@@ -138,6 +140,7 @@ export const NovoAluno = () => {
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
 
     try {
@@ -205,6 +208,7 @@ export const NovoAluno = () => {
     } catch (err: any) {
       setError(err?.message || 'Falha ao cadastrar atleta.');
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -648,9 +652,16 @@ export const NovoAluno = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-3 bg-[#112F20] text-white rounded-xl text-sm font-bold hover:bg-[#1E4D36] transition-colors shadow-lg shadow-green-900/20 disabled:opacity-50 text-center"
+            className="w-full sm:w-auto px-6 py-3 bg-[#112F20] text-white rounded-xl text-sm font-bold hover:bg-[#1E4D36] transition-colors shadow-lg shadow-green-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-center flex items-center justify-center gap-2 cursor-pointer"
           >
-            {loading ? 'Salvando Matrícula...' : 'Finalizar Matrícula'}
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Salvando Matrícula...</span>
+              </>
+            ) : (
+              'Finalizar Matrícula'
+            )}
           </button>
         </div>
 

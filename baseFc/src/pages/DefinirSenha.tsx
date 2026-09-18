@@ -31,6 +31,7 @@ export const DefinirSenha = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     if (password.length < 6) {
@@ -171,7 +172,7 @@ export const DefinirSenha = () => {
             <button
               type="submit"
               disabled={loading || password.length < 6 || password !== confirmPassword}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer"
             >
               {loading ? (
                 <>

@@ -111,6 +111,7 @@ export const Mensalidades = () => {
   // Batch generate
   const handleBatchGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (batchLoading) return;
     try {
       setBatchLoading(true);
       setBatchResult(null);
@@ -144,6 +145,7 @@ export const Mensalidades = () => {
   // Single create
   const handleSingleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (singleLoading) return;
     if (!singleForm.student_id) {
       alert('Selecione um atleta.');
       return;
@@ -178,7 +180,7 @@ export const Mensalidades = () => {
   // Confirm manual payment settlement (Anti-tampering Demonstration)
   const handleConfirmPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!payingPayment) return;
+    if (!payingPayment || payLoading) return;
     try {
       setPayLoading(true);
       await fetchApi(`/payments/${payingPayment.id}/pay`, {
@@ -203,6 +205,7 @@ export const Mensalidades = () => {
 
   // Delete / Cancel payment
   const handleDeletePayment = async (payment: Payment) => {
+    if (actionLoadingId) return;
     if (payment.status === 'PAGO') {
       alert('Não é possível excluir uma mensalidade que já consta como PAGA.');
       return;
@@ -684,9 +687,16 @@ export const Mensalidades = () => {
                 <button
                   type="submit"
                   disabled={payLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
                 >
-                  {payLoading ? 'Gravando...' : 'Confirmar Baixa'}
+                  {payLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Gravando...</span>
+                    </>
+                  ) : (
+                    'Confirmar Baixa'
+                  )}
                 </button>
               </div>
             </form>
@@ -783,9 +793,16 @@ export const Mensalidades = () => {
                 <button
                   type="submit"
                   disabled={batchLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
                 >
-                  {batchLoading ? 'Gerando...' : 'Gerar Títulos'}
+                  {batchLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Gerando...</span>
+                    </>
+                  ) : (
+                    'Gerar Títulos'
+                  )}
                 </button>
               </div>
             </form>
@@ -893,9 +910,16 @@ export const Mensalidades = () => {
                 <button
                   type="submit"
                   disabled={singleLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
                 >
-                  {singleLoading ? 'Criando...' : 'Criar Cobrança'}
+                  {singleLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Criando...</span>
+                    </>
+                  ) : (
+                    'Criar Cobrança'
+                  )}
                 </button>
               </div>
             </form>

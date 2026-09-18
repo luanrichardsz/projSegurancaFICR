@@ -141,7 +141,7 @@ export const Turmas = () => {
 
   // Save/Change Teacher in Deep Class View
   const handleSaveTeacher = async () => {
-    if (!selectedClassDetail) return;
+    if (!selectedClassDetail || savingTeacher) return;
     try {
       setSavingTeacher(true);
       setTeacherSuccessMsg('');
@@ -201,7 +201,7 @@ export const Turmas = () => {
 
   // Enroll student from Deep Class View
   const handleEnrollInDetail = async () => {
-    if (!selectedClassDetail || !selectedStudentToEnroll) return;
+    if (!selectedClassDetail || !selectedStudentToEnroll || enrollLoading) return;
 
     // Pré-validação de conflito de agenda no client
     const studentObj = availableStudents.find(s => s.id === selectedStudentToEnroll);
@@ -347,7 +347,7 @@ export const Turmas = () => {
   };
 
   const handleSaveAttendance = async () => {
-    if (!showAttendanceModal) return;
+    if (!showAttendanceModal || attendanceLoading) return;
     try {
       setAttendanceLoading(true);
       const attendees = Object.entries(attendanceRecords).map(([studentId, status]) => ({
@@ -383,6 +383,7 @@ export const Turmas = () => {
   // Create new class
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (createLoading) return;
     if (!newClass.days_of_week || newClass.days_of_week.length === 0) {
       setCreateError('Selecione ao menos um dia da semana para o treino.');
       return;
@@ -1325,7 +1326,7 @@ export const Turmas = () => {
                   type="button"
                   onClick={handleSaveAttendance}
                   disabled={attendanceLoading || classStudents.length === 0}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed cursor-pointer"
                 >
                   {attendanceLoading ? 'Salvando...' : 'Confirmar Chamada'}
                 </button>
@@ -1491,9 +1492,16 @@ export const Turmas = () => {
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
                 >
-                  {createLoading ? 'Salvando...' : 'Criar Turma'}
+                  {createLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    'Criar Turma'
+                  )}
                 </button>
               </div>
             </form>

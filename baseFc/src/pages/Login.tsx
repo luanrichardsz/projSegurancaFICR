@@ -9,6 +9,9 @@ export const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   
+  const [loading, setLoading] = useState(false);
+  const submittingRef = useState({ current: false })[0];
+  
   // Esqueci minha senha state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
@@ -21,12 +24,18 @@ export const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || submittingRef.current) return;
     try {
+      submittingRef.current = true;
+      setLoading(true);
       setError('');
       await login(email, password);
       navigate('/');
     } catch (err: any) {
       setError(err?.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
+    } finally {
+      submittingRef.current = false;
+      setLoading(false);
     }
   };
 
@@ -117,9 +126,17 @@ export const Login = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#112F20] text-white font-bold py-3 rounded-xl hover:bg-[#1E4D36] transition-all shadow-lg shadow-emerald-950/20 active:scale-98 cursor-pointer text-sm"
+            disabled={loading}
+            className="w-full bg-[#112F20] text-white font-bold py-3 rounded-xl hover:bg-[#1E4D36] transition-all shadow-lg shadow-emerald-950/20 active:scale-98 disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer text-sm flex items-center justify-center gap-2"
           >
-            Acessar Sistema
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Entrando...</span>
+              </>
+            ) : (
+              'Acessar Sistema'
+            )}
           </button>
         </form>
 

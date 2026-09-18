@@ -68,6 +68,7 @@ export const Professores = () => {
   // Create Teacher
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (createLoading) return;
     setCreateError('');
 
     if (newTeacher.name.trim().length < 3) {
@@ -134,7 +135,7 @@ export const Professores = () => {
   // Submit Update
   const handleUpdateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTeacher) return;
+    if (!editingTeacher || editLoading) return;
     setEditError('');
 
     if (editForm.name.trim().length < 3) {
@@ -424,9 +425,16 @@ export const Professores = () => {
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 text-center"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-center flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {createLoading ? 'Cadastrando...' : 'Salvar Professor'}
+                  {createLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Cadastrando...</span>
+                    </>
+                  ) : (
+                    'Salvar Professor'
+                  )}
                 </button>
               </div>
             </form>
@@ -545,9 +553,16 @@ export const Professores = () => {
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 text-center"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-center flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {editLoading ? 'Salvando...' : 'Salvar Alterações'}
+                  {editLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    'Salvar Alterações'
+                  )}
                 </button>
               </div>
             </form>

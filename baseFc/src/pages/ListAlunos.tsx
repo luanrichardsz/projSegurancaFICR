@@ -37,6 +37,7 @@ export const ListAlunos = () => {
 
   const handleToggleStatus = async (aluno: any) => {
     const newStatus = aluno.status === 'ATIVO' ? 'INATIVO' : 'ATIVO';
+    if (actionLoading) return;
     const actionLabel = newStatus === 'INATIVO' ? 'inativar' : 'reativar';
 
     if (!window.confirm(`Deseja realmente ${actionLabel} o atleta ${aluno.name}?`)) {

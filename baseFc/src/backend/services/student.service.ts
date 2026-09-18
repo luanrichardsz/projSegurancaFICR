@@ -2,6 +2,24 @@ import { supabaseAdmin } from '../config/supabase.ts';
 
 export class StudentService {
   async createStudent(schoolId: string, studentData: any, createdBy: string, clientOrigin?: string) {
+    // 0. Prevenção de Duplicidade Concorrente (Anti-duplo clique / Idempotência)
+    const recentWindow = new Date(Date.now() - 15000).toISOString();
+    const { data: recentDuplicate } = await supabaseAdmin
+      .from('students')
+      .select('id, name, created_at')
+      .eq('school_id', schoolId)
+      .ilike('name', studentData.name.trim())
+      .eq('dob', studentData.dob)
+      .gte('created_at', recentWindow)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (recentDuplicate) {
+      console.warn(`[StudentService] Requisição duplicada bloqueada para "${studentData.name}". Retornando registro existente.`);
+      return recentDuplicate;
+    }
+
     // 1. Inserir Aluno
     const cleanStudentCpf = (studentData.cpf && studentData.cpf.trim()) ? studentData.cpf.replace(/\D/g, '') : '00000000000';
     const studentRecord = {

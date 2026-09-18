@@ -123,6 +123,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saveLoading) return;
     if (!formData.name.trim() || formData.name.trim().length < 3) {
       setErrorMsg('O nome do atleta deve conter no mínimo 3 caracteres.');
       setActiveTab('dados');
@@ -680,7 +681,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
             <button
               type="submit"
               disabled={saveLoading}
-              className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 text-center"
+              className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2 text-center"
             >
               {saveLoading ? (
                 <>
