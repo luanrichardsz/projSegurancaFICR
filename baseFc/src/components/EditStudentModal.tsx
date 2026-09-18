@@ -219,63 +219,63 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
       <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in-95 duration-200 my-auto">
         
         {/* Header */}
-        <div className="bg-[#112F20] text-white p-6 relative shrink-0">
+        <div className="bg-[#112F20] text-white p-4 sm:p-6 relative shrink-0">
           <button 
             type="button"
             onClick={onClose}
-            className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors cursor-pointer"
+            className="absolute top-4 right-4 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors cursor-pointer z-10"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-lg flex items-center justify-center shadow-inner">
+          <div className="flex items-center gap-3 pr-10 sm:pr-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-black text-base sm:text-lg flex items-center justify-center shadow-inner shrink-0">
               #{formData.shirtNumber || '--'}
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Editar Dados do Atleta</h3>
-              <p className="text-emerald-200/80 text-xs mt-0.5">
-                Atualize as informações esportivas, cadastrais, saúde e contatos de segurança.
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-white truncate">Editar Dados do Atleta</h3>
+              <p className="text-emerald-200/80 text-2xs sm:text-xs mt-0.5 line-clamp-1">
+                Atualize as informações esportivas, cadastrais e contatos.
               </p>
             </div>
           </div>
 
           {/* Abas */}
-          <div className="flex space-x-2 mt-5 border-b border-white/10 overflow-x-auto">
+          <div className="flex space-x-1 sm:space-x-2 mt-4 sm:mt-5 border-b border-white/10 overflow-x-auto pb-1 scrollbar-none">
             <button
               type="button"
               onClick={() => setActiveTab('dados')}
-              className={`flex items-center px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
+              className={`flex items-center px-3 sm:px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'dados'
                   ? 'border-emerald-400 text-emerald-300 bg-white/5 rounded-t-lg'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
               }`}
             >
-              <User className="w-4 h-4 mr-1.5" />
-              Identificação & Esportivo
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
+              Identificação
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('saude')}
-              className={`flex items-center px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
+              className={`flex items-center px-3 sm:px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'saude'
                   ? 'border-emerald-400 text-emerald-300 bg-white/5 rounded-t-lg'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
               }`}
             >
-              <Heart className="w-4 h-4 mr-1.5" />
+              <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
               Saúde & Restrições
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('responsaveis')}
-              className={`flex items-center px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
+              className={`flex items-center px-3 sm:px-4 py-2 text-xs font-bold whitespace-nowrap transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'responsaveis'
                   ? 'border-emerald-400 text-emerald-300 bg-white/5 rounded-t-lg'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
               }`}
             >
-              <Shield className="w-4 h-4 mr-1.5" />
+              <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
               Responsável & Emergência
             </button>
           </div>
@@ -283,7 +283,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
 
         {/* Form Container */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto flex flex-col justify-between">
-          <div className="p-6 sm:p-7 space-y-5">
+          <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
             
             {errorMsg && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2 animate-in fade-in">
@@ -650,11 +650,11 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
           </div>
 
           {/* Footer com Ações */}
-          <div className="p-4 sm:p-5 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
+          <div className="p-4 sm:p-5 bg-gray-50 border-t border-gray-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-4 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer text-center"
             >
               Cancelar
             </button>
@@ -662,7 +662,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
             <button
               type="submit"
               disabled={saveLoading}
-              className="px-6 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 text-center"
             >
               {saveLoading ? (
                 <>

@@ -223,16 +223,16 @@ export const NovoAluno = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3 sm:space-x-4">
         <button 
           onClick={() => navigate('/alunos')}
-          className="p-2 bg-white rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-xs"
+          className="p-2 sm:p-2.5 bg-white rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors shadow-xs shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Nova Matrícula de Atleta</h1>
-          <p className="text-xs text-gray-500">Cadastro unificado com validação de integridade e desmascaramento automático</p>
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Nova Matrícula de Atleta</h1>
+          <p className="text-xs text-gray-500">Cadastro unificado com validação de integridade</p>
         </div>
       </div>
 
@@ -253,10 +253,10 @@ export const NovoAluno = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* Bloco 1: Dados do Atleta */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
           <div className="flex items-center space-x-2 border-b border-gray-100 pb-3">
             <UserPlus className="w-5 h-5 text-green-700" />
-            <h2 className="font-bold text-gray-900 text-lg">Dados do Atleta</h2>
+            <h2 className="font-bold text-gray-900 text-base sm:text-lg">Dados do Atleta</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -441,11 +441,11 @@ export const NovoAluno = () => {
         </div>
 
         {/* Bloco 2: Dados Médicos e Restrições (Confidencialidade) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
           <div className="flex items-center space-x-2 border-b border-gray-100 pb-3">
             <Heart className="w-5 h-5 text-red-600" />
             <div>
-              <h2 className="font-bold text-gray-900 text-lg">Informações de Saúde e Médicas</h2>
+              <h2 className="font-bold text-gray-900 text-base sm:text-lg">Informações de Saúde e Médicas</h2>
               <p className="text-2xs text-gray-400">Dados sensíveis protegidos por controle de acesso</p>
             </div>
           </div>
@@ -490,10 +490,10 @@ export const NovoAluno = () => {
         </div>
 
         {/* Bloco 3: Dados do Responsável */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
           <div className="flex items-center space-x-2 border-b border-gray-100 pb-3">
             <ShieldCheck className="w-5 h-5 text-green-700" />
-            <h2 className="font-bold text-gray-900 text-lg">Responsável Legal</h2>
+            <h2 className="font-bold text-gray-900 text-base sm:text-lg">Responsável Legal</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -574,10 +574,10 @@ export const NovoAluno = () => {
         </div>
 
         {/* Bloco 4: Contatos de Emergência & Retirada */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
           <div className="flex items-center space-x-2 border-b border-gray-100 pb-3">
             <ShieldAlert className="w-5 h-5 text-green-700" />
-            <h2 className="font-bold text-gray-900 text-lg">Contato de Emergência & Autorização de Retirada</h2>
+            <h2 className="font-bold text-gray-900 text-base sm:text-lg">Contato de Emergência & Autorização de Retirada</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -633,11 +633,11 @@ export const NovoAluno = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-4">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2 pb-6">
           <button 
             type="button" 
             onClick={() => navigate('/alunos')}
-            className="px-6 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center"
           >
             Cancelar
           </button>
@@ -645,7 +645,7 @@ export const NovoAluno = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="px-6 py-2.5 bg-[#112F20] text-white rounded-xl text-sm font-bold hover:bg-[#1E4D36] transition-colors shadow-lg shadow-green-900/20 disabled:opacity-50"
+            className="w-full sm:w-auto px-6 py-3 bg-[#112F20] text-white rounded-xl text-sm font-bold hover:bg-[#1E4D36] transition-colors shadow-lg shadow-green-900/20 disabled:opacity-50 text-center"
           >
             {loading ? 'Salvando Matrícula...' : 'Finalizar Matrícula'}
           </button>

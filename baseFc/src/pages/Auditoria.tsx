@@ -121,14 +121,14 @@ export const Auditoria = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Trilha de Auditoria & Segurança</h1>
-          <p className="text-gray-500 mt-1">Registros imutáveis de ações críticas para garantia da Tríade CID</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Trilha de Auditoria & Segurança</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Registros imutáveis de ações críticas para garantia da Tríade CID</p>
         </div>
         
         <button
           onClick={loadLogs}
           disabled={loading}
-          className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 shadow-2xs cursor-pointer transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-50 shadow-2xs cursor-pointer transition-colors disabled:opacity-50 w-full sm:w-auto"
         >
           <Clock className={`w-3.5 h-3.5 text-gray-500 ${loading ? 'animate-spin' : ''}`} /> 
           {loading ? 'Atualizando...' : 'Atualizar Logs'}
@@ -314,46 +314,46 @@ export const Auditoria = () => {
 
       {/* Modal: Inspecionar Payload Completo do Log */}
       {selectedLog && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-gray-100 p-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-gray-100 p-5 sm:p-6 my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">Evidência de Auditoria</h3>
-                <p className="text-xs text-gray-500 font-mono">ID: {selectedLog.id}</p>
+              <div className="min-w-0 pr-2">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900">Evidência de Auditoria</h3>
+                <p className="text-2xs text-gray-500 font-mono truncate">ID: {selectedLog.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLog(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer transition-colors shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3 pt-4 text-xs">
-              <div className="flex justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500 font-medium">Timestamp:</span>
-                <span className="font-bold text-gray-800">{formatDate(selectedLog.created_at || selectedLog.timestamp)}</span>
+            <div className="space-y-3 pt-4 text-xs overflow-y-auto flex-1">
+              <div className="flex justify-between py-1.5 border-b border-gray-50 gap-2">
+                <span className="text-gray-500 font-medium shrink-0">Timestamp:</span>
+                <span className="font-bold text-gray-800 text-right">{formatDate(selectedLog.created_at || selectedLog.timestamp)}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500 font-medium">Operador:</span>
-                <span className="font-bold text-gray-800">{selectedLog.user?.email || selectedLog.userEmail || 'Sistema'}</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-50 gap-2">
+                <span className="text-gray-500 font-medium shrink-0">Operador:</span>
+                <span className="font-bold text-gray-800 truncate text-right">{selectedLog.user?.email || selectedLog.userEmail || 'Sistema'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500 font-medium">Perfil (Role):</span>
-                <span className="font-bold text-gray-800">{selectedLog.user?.role || selectedLog.userRole || 'GESTOR'}</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-50 gap-2">
+                <span className="text-gray-500 font-medium shrink-0">Perfil (Role):</span>
+                <span className="font-bold text-gray-800 text-right">{selectedLog.user?.role || selectedLog.userRole || 'GESTOR'}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500 font-medium">Ação:</span>
-                <span className="font-bold text-gray-800">{selectedLog.action}</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-50 gap-2">
+                <span className="text-gray-500 font-medium shrink-0">Ação:</span>
+                <span className="font-bold text-gray-800 text-right">{selectedLog.action}</span>
               </div>
-              <div className="flex justify-between py-1.5 border-b border-gray-50">
-                <span className="text-gray-500 font-medium">Recurso:</span>
-                <span className="font-bold font-mono text-gray-800">{selectedLog.resource}</span>
+              <div className="flex justify-between py-1.5 border-b border-gray-50 gap-2">
+                <span className="text-gray-500 font-medium shrink-0">Recurso:</span>
+                <span className="font-bold font-mono text-gray-800 text-right">{selectedLog.resource}</span>
               </div>
 
               <div>
                 <span className="text-gray-500 font-medium block mb-1.5">Metadados Auditados (Payload):</span>
-                <pre className="bg-gray-900 text-emerald-400 p-4 rounded-xl text-2xs font-mono overflow-x-auto max-h-60">
+                <pre className="bg-gray-900 text-emerald-400 p-3 sm:p-4 rounded-xl text-2xs font-mono overflow-x-auto max-h-60 whitespace-pre-wrap break-all">
                   {JSON.stringify(selectedLog.details, null, 2)}
                 </pre>
               </div>
@@ -362,7 +362,7 @@ export const Auditoria = () => {
             <div className="pt-4 mt-4 border-t border-gray-100 flex justify-end">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
               >
                 Fechar Evidência
               </button>

@@ -62,50 +62,50 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header do Perfil */}
-        <div className="bg-[#112F20] text-white p-6 relative">
+        <div className="bg-[#112F20] text-white p-4 sm:p-6 relative">
           <button 
             onClick={onClose}
-            className="absolute top-5 right-5 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+            className="absolute top-4 right-4 text-gray-400 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>
           
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-green-500/20 border-2 border-green-400 text-green-300 font-bold text-2xl rounded-2xl flex items-center justify-center shadow-inner">
+          <div className="flex items-center space-x-3 sm:space-x-4 pr-10 sm:pr-12">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500/20 border-2 border-green-400 text-green-300 font-bold text-xl sm:text-2xl rounded-2xl flex items-center justify-center shadow-inner shrink-0">
               #{student.shirtNumber || student.shirt_number || '--'}
             </div>
-            <div>
-              <div className="flex items-center space-x-3">
-                <h2 className="text-2xl font-bold">{student.name}</h2>
-                <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg sm:text-2xl font-bold truncate">{student.name}</h2>
+                <span className={`px-2 py-0.5 text-2xs sm:text-xs font-semibold rounded-full ${
                   student.status === 'ATIVO' ? 'bg-green-500/20 text-green-300 border border-green-400/30' : 'bg-red-500/20 text-red-300'
                 }`}>
                   {student.status}
                 </span>
               </div>
-              <p className="text-green-200 text-sm mt-1">
+              <p className="text-green-200 text-xs sm:text-sm mt-0.5 sm:mt-1 truncate">
                 {student.category} • {student.position} • Pé {student.dominantFoot || student.dominant_foot || 'Não informado'}
               </p>
             </div>
           </div>
 
           {/* Abas de Navegação */}
-          <div className="flex space-x-2 mt-6 border-b border-white/10 overflow-x-auto">
-            <TabButton active={activeTab === 'dados'} onClick={() => setActiveTab('dados')} icon={<User className="w-4 h-4 mr-2" />} label="Atleta" />
-            <TabButton active={activeTab === 'responsaveis'} onClick={() => setActiveTab('responsaveis')} icon={<ShieldCheck className="w-4 h-4 mr-2" />} label="Responsáveis" />
-            <TabButton active={activeTab === 'saude'} onClick={() => setActiveTab('saude')} icon={<Heart className="w-4 h-4 mr-2" />} label="Emergência & Retirada" />
-            <TabButton active={activeTab === 'frequencia'} onClick={() => setActiveTab('frequencia')} icon={<CalendarCheck className="w-4 h-4 mr-2" />} label={`Frequência (${attendance.attendanceRate}%)`} />
-            <TabButton active={activeTab === 'mensalidades'} onClick={() => setActiveTab('mensalidades')} icon={<CreditCard className="w-4 h-4 mr-2" />} label="Mensalidades" />
+          <div className="flex space-x-1 sm:space-x-2 mt-4 sm:mt-6 border-b border-white/10 overflow-x-auto pb-1 scrollbar-none">
+            <TabButton active={activeTab === 'dados'} onClick={() => setActiveTab('dados')} icon={<User className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />} label="Atleta" />
+            <TabButton active={activeTab === 'responsaveis'} onClick={() => setActiveTab('responsaveis')} icon={<ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />} label="Responsáveis" />
+            <TabButton active={activeTab === 'saude'} onClick={() => setActiveTab('saude')} icon={<Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />} label="Emergência" />
+            <TabButton active={activeTab === 'frequencia'} onClick={() => setActiveTab('frequencia')} icon={<CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />} label={`Frequência (${attendance.attendanceRate}%)`} />
+            <TabButton active={activeTab === 'mensalidades'} onClick={() => setActiveTab('mensalidades')} icon={<CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />} label="Mensalidades" />
           </div>
         </div>
 
         {/* Conteúdo da Aba */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
           
           {/* ABA 1: DADOS GERAIS */}
           {activeTab === 'dados' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <InfoBox label="Data de Nascimento" value={student.dob || 'Não informada'} />
                 <InfoBox label="CPF do Atleta" value={student.cpf && student.cpf !== '00000000000' ? maskCPF(student.cpf) : 'Não informado'} />
                 <InfoBox label="Categoria" value={student.category} />
@@ -120,9 +120,9 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                   <p className="text-sm text-gray-500">Este atleta ainda não foi alocado em nenhuma turma.</p>
                 ) : (
                   classes.map((c: any) => (
-                    <div key={c.id} className="flex items-center justify-between text-sm">
+                    <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between text-sm py-1 border-b border-gray-100 last:border-0 gap-1">
                       <span className="font-semibold text-gray-800">{c.name} ({c.category})</span>
-                      <span className="text-gray-500">{c.days_of_week?.join(', ')} • {c.start_time?.slice(0,5)} às {c.end_time?.slice(0,5)}</span>
+                      <span className="text-xs sm:text-sm text-gray-500">{c.days_of_week?.join(', ')} • {c.start_time?.slice(0,5)} às {c.end_time?.slice(0,5)}</span>
                     </div>
                   ))
                 )}
@@ -137,9 +137,9 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 <div className="text-center py-8 text-gray-500">Nenhum responsável cadastrado para este atleta.</div>
               ) : (
                 guardians.map((g: any) => (
-                  <div key={g.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
+                  <div key={g.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <div className="font-bold text-gray-900 text-base">{g.name}</div>
                         {g.hasPortalAccess ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -154,7 +154,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                       <div className="text-xs text-gray-500 mt-1 space-y-0.5">
                         <div>CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
                         {g.email ? (
-                          <div className="flex items-center text-gray-700 font-medium">
+                          <div className="flex items-center text-gray-700 font-medium break-all">
                             <Mail className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
                             {g.email}
                           </div>
@@ -163,8 +163,8 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                         )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <a href={`tel:${g.phone}`} className="inline-flex items-center text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
+                    <div className="sm:text-right">
+                      <a href={`tel:${g.phone}`} className="inline-flex items-center text-xs sm:text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
                         <Phone className="w-4 h-4 mr-1.5" /> {g.phone ? maskPhone(g.phone) : 'Sem telefone'}
                       </a>
                     </div>
@@ -186,7 +186,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 ) : (
                   <div className="space-y-3">
                     {emergencyContacts.map((c: any) => (
-                      <div key={c.id} className="p-4 rounded-xl border border-gray-200 flex items-center justify-between bg-white shadow-xs">
+                      <div key={c.id} className="p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white shadow-xs">
                         <div>
                           <div className="flex items-center space-x-2">
                             <span className="font-bold text-gray-900">{c.name}</span>
@@ -221,22 +221,22 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
           {/* ABA 4: FREQUÊNCIA */}
           {activeTab === 'frequencia' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  <div className="text-2xl font-bold text-gray-900">{attendance.totalTrainings}</div>
-                  <div className="text-xs text-gray-500 mt-1 uppercase">Total Treinos</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-100">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900">{attendance.totalTrainings}</div>
+                  <div className="text-2xs sm:text-xs text-gray-500 mt-1 uppercase">Total Treinos</div>
                 </div>
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100">
-                  <div className="text-2xl font-bold text-green-700">{attendance.presences}</div>
-                  <div className="text-xs text-green-600 mt-1 uppercase">Presenças</div>
+                <div className="bg-green-50 p-3 sm:p-4 rounded-xl border border-green-100">
+                  <div className="text-xl sm:text-2xl font-bold text-green-700">{attendance.presences}</div>
+                  <div className="text-2xs sm:text-xs text-green-600 mt-1 uppercase">Presenças</div>
                 </div>
-                <div className="bg-red-50 p-4 rounded-xl border border-red-100">
-                  <div className="text-2xl font-bold text-red-700">{attendance.absences}</div>
-                  <div className="text-xs text-red-600 mt-1 uppercase">Faltas</div>
+                <div className="bg-red-50 p-3 sm:p-4 rounded-xl border border-red-100">
+                  <div className="text-xl sm:text-2xl font-bold text-red-700">{attendance.absences}</div>
+                  <div className="text-2xs sm:text-xs text-red-600 mt-1 uppercase">Faltas</div>
                 </div>
-                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                  <div className="text-2xl font-bold text-blue-700">{attendance.attendanceRate}%</div>
-                  <div className="text-xs text-blue-600 mt-1 uppercase">Assiduidade</div>
+                <div className="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-100">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-700">{attendance.attendanceRate}%</div>
+                  <div className="text-2xs sm:text-xs text-blue-600 mt-1 uppercase">Assiduidade</div>
                 </div>
               </div>
 
@@ -247,12 +247,12 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 ) : (
                   <div className="space-y-2">
                     {attendance.history.map((h: any) => (
-                      <div key={h.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 text-sm">
+                      <div key={h.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-100 text-xs sm:text-sm">
                         <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                          <Clock className="w-4 h-4 text-gray-400 shrink-0" />
                           <span className="font-medium text-gray-700">{h.date}</span>
                         </div>
-                        <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                        <span className={`px-2.5 py-0.5 text-2xs sm:text-xs font-semibold rounded-full ${
                           h.status === 'PRESENTE' ? 'bg-green-100 text-green-700' :
                           h.status === 'AUSENTE' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                         }`}>
@@ -274,17 +274,17 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
               ) : (
                 <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                   {payments.map((p: any) => (
-                    <div key={p.id} className="p-4 flex items-center justify-between hover:bg-gray-50/50">
+                    <div key={p.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-gray-50/50">
                       <div>
-                        <div className="font-bold text-gray-900">Competência: {p.competence}</div>
+                        <div className="font-bold text-gray-900 text-sm sm:text-base">Competência: {p.competence}</div>
                         <div className="text-xs text-gray-500 mt-0.5">Vencimento: {p.due_date}</div>
                         {p.paid_at && (
                           <div className="text-xs text-green-600 mt-0.5 font-medium">Pago em {p.paid_at.slice(0, 10)} via {p.payment_method}</div>
                         )}
                       </div>
-                      <div className="text-right">
-                        <div className="text-base font-bold text-gray-900">R$ {Number(p.amount).toFixed(2)}</div>
-                        <span className={`inline-block mt-1 px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                      <div className="sm:text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+                        <div className="text-sm sm:text-base font-bold text-gray-900">R$ {Number(p.amount).toFixed(2)}</div>
+                        <span className={`inline-block mt-0.5 px-2.5 py-0.5 text-2xs sm:text-xs font-semibold rounded-full ${
                           p.status === 'PAGO' ? 'bg-green-100 text-green-700' :
                           p.status === 'PENDENTE' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                         }`}>
@@ -304,7 +304,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
         <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-end">
           <button 
             onClick={onClose}
-            className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition-colors"
+            className="w-full sm:w-auto px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-xl transition-colors text-center"
           >
             Fechar
           </button>

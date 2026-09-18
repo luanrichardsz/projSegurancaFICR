@@ -38,27 +38,27 @@ export const DashboardGestor = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#112F20] to-[#1E4D36] p-8 rounded-3xl text-white shadow-xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 bg-gradient-to-r from-[#112F20] to-[#1E4D36] p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 mb-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 mb-2 sm:mb-3">
             <ShieldCheck className="w-3.5 h-3.5" /> Gestão de Time • Tríade CID
           </span>
-          <h1 className="text-3xl font-black tracking-tight">Painel do Gestor</h1>
-          <p className="text-emerald-100/80 text-sm mt-1 max-w-xl">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Painel do Gestor</h1>
+          <p className="text-emerald-100/80 text-xs sm:text-sm mt-1 max-w-xl">
             Visão consolidada de atletas, turmas ativas, controle financeiro e integridade de registros da escolinha de futebol.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto">
           <button
             onClick={() => navigate('/alunos/novo')}
-            className="inline-flex items-center gap-2 bg-emerald-400 text-[#112F20] px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-300 transition-all shadow-md active:scale-95"
+            className="inline-flex items-center justify-center gap-2 bg-emerald-400 text-[#112F20] px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-emerald-300 transition-all shadow-md active:scale-95 cursor-pointer w-full sm:w-auto"
           >
             <UserPlus className="w-4 h-4" /> Nova Matrícula
           </button>
           <button
             onClick={() => navigate('/turmas')}
-            className="inline-flex items-center gap-2 bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-white/20 transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-white/20 transition-all cursor-pointer w-full sm:w-auto"
           >
             <UserCheck className="w-4 h-4" /> Fazer Chamada
           </button>

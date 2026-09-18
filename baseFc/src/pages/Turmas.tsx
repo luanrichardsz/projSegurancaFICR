@@ -494,14 +494,14 @@ export const Turmas = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Turmas e Treinos</h1>
-          <p className="text-gray-500 mt-1">Clique na turma para visualizar todos os atletas, ficha resumida e atribuir professor</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Turmas e Treinos</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Clique na turma para visualizar todos os atletas, ficha resumida e atribuir professor</p>
         </div>
         
         {role === 'GESTOR' && (
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95 cursor-pointer w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
             Nova Turma
@@ -1240,10 +1240,10 @@ export const Turmas = () => {
                   return (
                     <div 
                       key={aluno.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100/70 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100/70 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="relative">
+                        <div className="relative shrink-0">
                           <div className="w-9 h-9 rounded-xl bg-[#112F20] text-emerald-300 font-bold flex items-center justify-center text-xs shadow-xs border border-emerald-800/60">
                             {aluno.name?.charAt(0).toUpperCase()}
                           </div>
@@ -1253,19 +1253,19 @@ export const Turmas = () => {
                             </span>
                           )}
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{aluno.name}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{aluno.name}</p>
                           <p className="text-2xs text-gray-500">
                             Camisa #{aluno.shirt_number || aluno.shirtNumber || 'S/N'} • {aluno.category || 'Geral'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="grid grid-cols-3 gap-1.5 w-full sm:w-auto shrink-0">
                         <button
                           type="button"
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'PRESENTE' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
+                          className={`px-2.5 py-1.5 text-2xs font-bold rounded-lg border transition-all cursor-pointer text-center ${
                             status === 'PRESENTE'
                               ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
@@ -1276,7 +1276,7 @@ export const Turmas = () => {
                         <button
                           type="button"
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'AUSENTE' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
+                          className={`px-2.5 py-1.5 text-2xs font-bold rounded-lg border transition-all cursor-pointer text-center ${
                             status === 'AUSENTE'
                               ? 'bg-red-600 text-white border-red-600 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'
@@ -1287,7 +1287,7 @@ export const Turmas = () => {
                         <button
                           type="button"
                           onClick={() => setAttendanceRecords(prev => ({ ...prev, [aluno.id]: 'JUSTIFICADO' }))}
-                          className={`px-2.5 py-1 text-2xs font-bold rounded-lg border transition-all cursor-pointer ${
+                          className={`px-2.5 py-1.5 text-2xs font-bold rounded-lg border transition-all cursor-pointer text-center ${
                             status === 'JUSTIFICADO'
                               ? 'bg-amber-500 text-white border-amber-500 shadow-2xs'
                               : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-100'

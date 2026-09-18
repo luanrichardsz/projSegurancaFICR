@@ -200,14 +200,14 @@ export const Professores = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Comissão Técnica</h1>
-          <p className="text-gray-500 mt-1">Professores, treinadores e preparadores físicos da escolinha</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Comissão Técnica</h1>
+          <p className="text-gray-500 text-xs sm:text-sm mt-1">Professores, treinadores e preparadores físicos da escolinha</p>
         </div>
         
         {role === 'GESTOR' && (
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#112F20] text-white px-5 py-2.5 rounded-xl font-medium hover:bg-[#1E4D36] transition-all shadow-md shadow-emerald-900/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Cadastrar Professor
@@ -329,7 +329,7 @@ export const Professores = () => {
       {/* Modal 1: Cadastrar Professor */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Cadastrar Professor</h3>
@@ -364,7 +364,7 @@ export const Professores = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">E-mail</label>
                   <input 
@@ -413,18 +413,18 @@ export const Professores = () => {
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="w-full sm:w-auto px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-[#112F20] hover:bg-[#1E4D36] rounded-xl transition-all shadow-xs disabled:opacity-50 text-center"
                 >
                   {createLoading ? 'Cadastrando...' : 'Salvar Professor'}
                 </button>
@@ -437,7 +437,7 @@ export const Professores = () => {
       {/* Modal 2: Editar Professor */}
       {editingTeacher && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Editar Professor</h3>
@@ -472,7 +472,7 @@ export const Professores = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">E-mail</label>
                   <input 
@@ -497,7 +497,7 @@ export const Professores = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">CREF</label>
                   <input 
@@ -534,18 +534,18 @@ export const Professores = () => {
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingTeacher(null)}
-                  className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl"
+                  className="w-full sm:w-auto px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl text-center"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-xs disabled:opacity-50 text-center"
                 >
                   {editLoading ? 'Salvando...' : 'Salvar Alterações'}
                 </button>

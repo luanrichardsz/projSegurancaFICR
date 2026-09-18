@@ -130,10 +130,10 @@ export const DashboardResponsavel = () => {
   return (
     <div className="space-y-6">
       {/* Banner de Boas-Vindas */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#112F20] via-[#143B27] to-[#1E4D36] p-6 sm:p-8 rounded-3xl text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#112F20] via-[#143B27] to-[#1E4D36] p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
                 <ShieldCheck className="w-3 h-3" /> Portal do Responsável
               </span>
@@ -151,14 +151,14 @@ export const DashboardResponsavel = () => {
 
           {/* Seletor de Atletas (caso o pai tenha mais de 1 filho) */}
           {students.length > 1 && (
-            <div className="bg-black/25 backdrop-blur-xs p-2 rounded-2xl border border-white/10 shrink-0">
-              <p className="text-2xs font-bold text-emerald-300 uppercase px-2 mb-1">Selecione o Atleta</p>
-              <div className="flex gap-1.5">
+            <div className="bg-black/25 backdrop-blur-xs p-2.5 rounded-2xl border border-white/10 shrink-0 max-w-full overflow-x-auto">
+              <p className="text-2xs font-bold text-emerald-300 uppercase px-1 mb-1.5">Selecione o Atleta</p>
+              <div className="flex gap-2">
                 {students.map((st, idx) => (
                   <button
                     key={st.id}
                     onClick={() => setSelectedStudentIndex(idx)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                       selectedStudentIndex === idx
                         ? 'bg-emerald-400 text-[#112F20] shadow-md'
                         : 'text-white/80 hover:bg-white/10'
@@ -174,15 +174,15 @@ export const DashboardResponsavel = () => {
       </div>
 
       {/* Cartão de Identidade do Atleta */}
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-[#112F20] text-white font-black text-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-[#112F20] text-white font-black text-xl sm:text-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
             #{currentStudent.shirtNumber || '--'}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-gray-900">{currentStudent.name}</h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg sm:text-2xl font-black text-gray-900 truncate">{currentStudent.name}</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-2xs sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 {currentStudent.status || 'ATIVO'}
               </span>
             </div>
@@ -192,22 +192,22 @@ export const DashboardResponsavel = () => {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
-          <div className="px-3 py-2 bg-gray-50 rounded-xl text-center">
-            <span className="block text-2xs text-gray-400 font-bold uppercase">Camisa Oficial</span>
-            <span className="text-sm font-black text-emerald-700">#{currentStudent.shirtNumber || '--'}</span>
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+          <div className="px-2.5 py-2 bg-gray-50 rounded-xl text-center">
+            <span className="block text-3xs sm:text-2xs text-gray-400 font-bold uppercase">Camisa</span>
+            <span className="text-xs sm:text-sm font-black text-emerald-700">#{currentStudent.shirtNumber || '--'}</span>
           </div>
-          <div className="px-3 py-2 bg-gray-50 rounded-xl text-center">
-            <span className="block text-2xs text-gray-400 font-bold uppercase">Turmas</span>
-            <span className="text-sm font-bold text-gray-800">
+          <div className="px-2.5 py-2 bg-gray-50 rounded-xl text-center">
+            <span className="block text-3xs sm:text-2xs text-gray-400 font-bold uppercase">Turmas</span>
+            <span className="text-xs sm:text-sm font-bold text-gray-800 truncate block">
               {classes.length > 1 
                 ? `${classes.length} turmas` 
                 : currentClass?.name || 'Aguardando'}
             </span>
           </div>
-          <div className="px-3 py-2 bg-gray-50 rounded-xl text-center">
-            <span className="block text-2xs text-gray-400 font-bold uppercase">Mensalidades</span>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+          <div className="px-2.5 py-2 bg-gray-50 rounded-xl text-center">
+            <span className="block text-3xs sm:text-2xs text-gray-400 font-bold uppercase">Mensalidade</span>
+            <span className={`text-3xs sm:text-xs font-bold px-1.5 py-0.5 rounded-md inline-block ${
               currentStudent.financialStatus === 'EM_DIA'
                 ? 'bg-emerald-100 text-emerald-800'
                 : currentStudent.financialStatus === 'PENDENTE'
