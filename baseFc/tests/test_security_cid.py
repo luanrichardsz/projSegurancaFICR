@@ -194,6 +194,30 @@ class SecurityTestRunner:
         except Exception as e:
             self.record_result("INTEGRIDADE", "I3", "Validação de limites e domínio de atributos esportivos", False, f"Erro: {e}")
 
+        # I4: Tentativa de cadastro com caracteres numéricos no nome do responsável
+        try:
+            invalid_guardian_payload = {
+                "name": "Atleta Teste Integridade",
+                "dob": "2015-05-10",
+                "category": "Sub-11",
+                "shirtNumber": 10,
+                "guardian": {
+                    "name": "Marcos Silva 123", # Inválido: números no nome do responsável
+                    "phone": "81999998888"
+                }
+            }
+            headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
+            r = requests.post(f"{self.base_url}/api/students", json=invalid_guardian_payload, headers=headers, timeout=10)
+            if self.token:
+                passed = r.status_code == 400
+                msg = f"HTTP {r.status_code} recebido. Zod barrou o nome com dígitos: {r.text[:80]}..."
+            else:
+                passed = r.status_code in (400, 401)
+                msg = f"HTTP {r.status_code} recebido. Requisição com números no nome barrada com sucesso."
+            self.record_result("INTEGRIDADE", "I4", "Rejeição de caracteres numéricos no nome do responsável", passed, msg)
+        except Exception as e:
+            self.record_result("INTEGRIDADE", "I4", "Rejeição de caracteres numéricos no nome do responsável", False, f"Erro: {e}")
+
     # =========================================================================
     # PILAR 3: DISPONIBILIDADE E RESILIÊNCIA (D)
     # =========================================================================

@@ -36,7 +36,10 @@ export const createStudentSchema = z.object({
   medications: z.string().max(200).optional().or(z.literal('')),
   // Responsável
   guardian: z.object({
-    name: z.string().min(3, 'Nome do responsável obrigatório').max(100),
+    name: z.string()
+      .min(3, 'Nome do responsável obrigatório')
+      .max(100)
+      .regex(/^[^0-9]+$/, 'O nome do responsável não pode conter números'),
     cpf: z.string().max(14).optional().or(z.literal('')),
     phone: z.string().min(8, 'Telefone do responsável obrigatório').max(15),
     email: z.string().email('E-mail do responsável inválido').optional().nullable().or(z.literal('')),
@@ -44,7 +47,10 @@ export const createStudentSchema = z.object({
   }).optional().nullable(),
   // Contato de Emergência
   emergencyContact: z.object({
-    name: z.string().min(3, 'Nome do contato de emergência').max(100),
+    name: z.string()
+      .min(3, 'Nome do contato de emergência')
+      .max(100)
+      .regex(/^[^0-9]+$/, 'O nome do contato de emergência não pode conter números'),
     relationship: z.string().max(50).optional().default('Familiar'),
     phone: z.string().min(8, 'Telefone de emergência').max(15),
     authorizedPickup: z.boolean().default(true),
@@ -75,14 +81,20 @@ export const updateStudentSchema = z.object({
   medical_restrictions: z.string().max(200).optional().nullable().or(z.literal('')),
   medications: z.string().max(200).optional().nullable().or(z.literal('')),
   guardian: z.object({
-    name: z.string().min(3, 'Nome do responsável obrigatório').max(100),
+    name: z.string()
+      .min(3, 'Nome do responsável obrigatório')
+      .max(100)
+      .regex(/^[^0-9]+$/, 'O nome do responsável não pode conter números'),
     cpf: z.string().max(14).optional().nullable().or(z.literal('')),
     phone: z.string().min(8, 'Telefone do responsável obrigatório').max(15),
     email: z.string().email('E-mail do responsável inválido').optional().nullable().or(z.literal('')),
     relationship: z.string().max(50).optional().default('Pai/Mãe')
   }).optional().nullable(),
   emergencyContact: z.object({
-    name: z.string().min(3, 'Nome do contato de emergência').max(100),
+    name: z.string()
+      .min(3, 'Nome do contato de emergência')
+      .max(100)
+      .regex(/^[^0-9]+$/, 'O nome do contato de emergência não pode conter números'),
     relationship: z.string().max(50).optional().default('Familiar'),
     phone: z.string().min(8, 'Telefone de emergência').max(15),
     authorizedPickup: z.boolean().default(true),

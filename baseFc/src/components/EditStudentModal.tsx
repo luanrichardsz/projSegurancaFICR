@@ -171,6 +171,11 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
       };
 
       if (formData.guardianName.trim()) {
+        if (/\d/.test(formData.guardianName)) {
+          setErrorMsg('O nome do responsável não pode conter números.');
+          setActiveTab('responsaveis');
+          return;
+        }
         payload.guardian = {
           name: formData.guardianName.trim(),
           email: formData.guardianEmail.trim() || undefined,
@@ -181,6 +186,11 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
       }
 
       if (formData.emergencyName.trim()) {
+        if (/\d/.test(formData.emergencyName)) {
+          setErrorMsg('O nome do contato de emergência não pode conter números.');
+          setActiveTab('responsaveis');
+          return;
+        }
         payload.emergencyContact = {
           name: formData.emergencyName.trim(),
           phone: unmask(formData.emergencyPhone) || '000000000',
@@ -557,7 +567,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
                         maxLength={100}
                         placeholder="Nome completo do pai, mãe ou tutor"
                         value={formData.guardianName}
-                        onChange={e => setFormData(prev => ({ ...prev, guardianName: e.target.value }))}
+                        onChange={e => setFormData(prev => ({ ...prev, guardianName: e.target.value.replace(/[0-9]/g, '') }))}
                         className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
                       />
                     </div>
@@ -632,7 +642,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
                         maxLength={100}
                         placeholder="Nome da pessoa a acionar"
                         value={formData.emergencyName}
-                        onChange={e => setFormData(prev => ({ ...prev, emergencyName: e.target.value }))}
+                        onChange={e => setFormData(prev => ({ ...prev, emergencyName: e.target.value.replace(/[0-9]/g, '') }))}
                         className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
                       />
                     </div>

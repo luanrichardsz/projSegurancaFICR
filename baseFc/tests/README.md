@@ -18,6 +18,7 @@ A suíte executa testes de intrusão defensivos e validação de conformidade di
 - **I1**: Rejeição de CPFs matematicamente inválidos e dados espúrios antes de persistência no PostgreSQL.
 - **I2**: Validação de Schemas estritos com Zod, impedindo gravação de payloads parciais ou campos obrigatórios faltantes.
 - **I3**: Aplicação de regras de negócio esportivas (números de camisa estritamente entre 1 e 99, faixas etárias de 6 a 16 anos).
+- **I4**: Rejeição de caracteres numéricos no nome do responsável legal e contatos de emergência (Zod Regex & Defesa de Entrada).
 
 ### 3. ⚡ Disponibilidade e Resiliência (D)
 - **D1**: Healthcheck operacional ativo com tempo de resposta em milissegundos (`GET /api/health`).
