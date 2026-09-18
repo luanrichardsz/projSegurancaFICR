@@ -1,0 +1,8 @@
+{
+  "name": "base-fc-root",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix baseFc install && npm --prefix baseFc run build",
+    "start": "npm --prefix baseFc run start"
+  }
+}
