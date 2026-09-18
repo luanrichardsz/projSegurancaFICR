@@ -54,6 +54,7 @@ async function startServer() {
   app.use('/api/attendance', attendanceRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/audit', auditRoutes);
   app.use('/api/audit-logs', auditRoutes);
 
   // Middleware Global de Tratamento de Erros

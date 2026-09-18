@@ -8,12 +8,16 @@ import {
 
 interface AuditLog {
   id: string;
-  user_id: string;
+  user_id?: string;
+  userId?: string;
+  userEmail?: string;
+  userRole?: string;
   action: string;
   resource: string;
   resource_id?: string;
   details?: any;
-  created_at: string;
+  created_at?: string;
+  timestamp?: string;
   user?: {
     email: string;
     role?: string;
@@ -24,6 +28,7 @@ export const Auditoria = () => {
   const { token, role } = useAuth();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('TODAS');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
@@ -31,10 +36,18 @@ export const Auditoria = () => {
   const loadLogs = async () => {
     try {
       setLoading(true);
-      const data = await fetchApi('/audit', {}, token);
-      setLogs(data || []);
-    } catch (err) {
-      console.error('Erro ao carregar logs de auditoria', err);
+      setError(null);
+      let data: any = null;
+      try {
+        data = await fetchApi('/audit', {}, token);
+      } catch (firstErr) {
+        console.warn('Tentando endpoint alternativo /audit-logs...', firstErr);
+        data = await fetchApi('/audit-logs', {}, token);
+      }
+      setLogs(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error('Erro ao carregar logs de auditoria:', err);
+      setError(err?.message || 'Falha ao carregar trilha de auditoria.');
     } finally {
       setLoading(false);
     }
@@ -44,12 +57,23 @@ export const Auditoria = () => {
     loadLogs();
   }, [token]);
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleString('pt-BR');
+    } catch {
+      return '—';
+    }
+  };
+
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      const email = log.user?.email || '';
+      const email = log.user?.email || log.userEmail || '';
       const action = log.action || '';
       const resource = log.resource || '';
-      const detailsStr = JSON.stringify(log.details || {});
+      const detailsStr = typeof log.details === 'object' ? JSON.stringify(log.details) : String(log.details || '');
 
       const matchesSearch = 
         email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,16 +94,23 @@ export const Auditoria = () => {
   }, [logs]);
 
   const getActionBadge = (action: string) => {
-    if (action.includes('PAYMENT') || action.includes('PAID')) {
+    const act = (action || '').toUpperCase();
+    if (act.includes('PAGAMENTO') || act.includes('MENSALIDADE') || act.includes('PAYMENT') || act.includes('BAIXA')) {
       return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     }
-    if (action.includes('STUDENT') || action.includes('ENROLL')) {
+    if (act.includes('ALUNO') || act.includes('STUDENT') || act.includes('MATRICULA')) {
       return 'bg-blue-100 text-blue-800 border-blue-200';
     }
-    if (action.includes('ATTENDANCE')) {
+    if (act.includes('CHAMADA') || act.includes('FREQUENCIA') || act.includes('ATTENDANCE')) {
       return 'bg-purple-100 text-purple-800 border-purple-200';
     }
-    if (action.includes('DELETE') || action.includes('INACTIVE')) {
+    if (act.includes('TURMA') || act.includes('CLASS')) {
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    }
+    if (act.includes('PROFESSOR') || act.includes('TEACHER')) {
+      return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+    }
+    if (act.includes('EXCLUIR') || act.includes('INATIVAR') || act.includes('DELETE') || act.includes('INACTIVE')) {
       return 'bg-red-100 text-red-800 border-red-200';
     }
     return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -96,9 +127,11 @@ export const Auditoria = () => {
         
         <button
           onClick={loadLogs}
-          className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 shadow-2xs"
+          disabled={loading}
+          className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 shadow-2xs cursor-pointer transition-colors disabled:opacity-50"
         >
-          <Clock className="w-3.5 h-3.5 text-gray-500" /> Atualizar Logs
+          <Clock className={`w-3.5 h-3.5 text-gray-500 ${loading ? 'animate-spin' : ''}`} /> 
+          {loading ? 'Atualizando...' : 'Atualizar Logs'}
         </button>
       </div>
 
@@ -141,6 +174,22 @@ export const Auditoria = () => {
         </div>
       </div>
 
+      {/* Alerta de Erro */}
+      {error && (
+        <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+            <span className="text-xs font-medium">{error}</span>
+          </div>
+          <button
+            onClick={loadLogs}
+            className="text-xs font-bold bg-rose-600 text-white px-3 py-1.5 rounded-lg hover:bg-rose-700 transition-colors cursor-pointer"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      )}
+
       {/* Table & Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-3 bg-gray-50/70 items-center justify-between">
@@ -166,7 +215,7 @@ export const Auditoria = () => {
               onChange={e => setActionFilter(e.target.value)}
               className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600"
             >
-              <option value="TODAS">Todas as Ações</option>
+              <option value="TODAS">Todas as Ações ({uniqueActions.length})</option>
               {uniqueActions.map(act => (
                 <option key={act} value={act}>{act}</option>
               ))}
@@ -201,52 +250,62 @@ export const Auditoria = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredLogs.map(log => (
-                  <tr key={log.id} className="hover:bg-emerald-50/30 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
-                      {new Date(log.created_at).toLocaleString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold">
-                          <User className="w-3.5 h-3.5" />
+                {filteredLogs.map(log => {
+                  const operatorEmail = log.user?.email || log.userEmail || 'Sistema';
+                  const operatorRole = log.user?.role || log.userRole || 'GESTOR';
+                  const logDate = log.created_at || log.timestamp;
+
+                  return (
+                    <tr key={log.id} className="hover:bg-emerald-50/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 font-medium">
+                        {formatDate(logDate)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold">
+                            <User className="w-3.5 h-3.5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-gray-900">{operatorEmail}</p>
+                            <p className="text-2xs text-gray-400 uppercase">{operatorRole}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs font-semibold text-gray-900">{log.user?.email || 'Sistema'}</p>
-                          <p className="text-2xs text-gray-400 uppercase">{log.user?.role || 'GESTOR'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-1 text-2xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-mono text-gray-700">
-                      {log.resource}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
-                      {log.details ? (
-                        <span>
-                          {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
-                          {log.details.payment_method ? `Método: ${log.details.payment_method} ` : ''}
-                          {log.details.amount ? `R$ ${log.details.amount}` : ''}
-                          {!log.details.student_name && !log.details.payment_method ? JSON.stringify(log.details) : ''}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 text-2xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
+                          {log.action}
                         </span>
-                      ) : (
-                        <span className="text-gray-400 italic">Sem payload</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedLog(log)}
-                        className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Detalhes
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-mono text-gray-700">
+                        {log.resource}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate">
+                        {log.details ? (
+                          <span>
+                            {log.details.name ? `Nome: ${log.details.name} ` : ''}
+                            {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
+                            {log.details.category ? `Cat: ${log.details.category} ` : ''}
+                            {log.details.amount ? `R$ ${log.details.amount} ` : ''}
+                            {log.details.paymentMethod || log.details.payment_method ? `Método: ${log.details.paymentMethod || log.details.payment_method} ` : ''}
+                            {log.details.capacity ? `Vagas: ${log.details.capacity} ` : ''}
+                            {log.details.status ? `Status: ${log.details.status} ` : ''}
+                            {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.capacity && !log.details.category ? JSON.stringify(log.details) : ''}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic">Sem payload</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => setSelectedLog(log)}
+                          className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Detalhes
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -260,11 +319,11 @@ export const Auditoria = () => {
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Evidência de Auditoria</h3>
-                <p className="text-xs text-gray-500">ID: {selectedLog.id}</p>
+                <p className="text-xs text-gray-500 font-mono">ID: {selectedLog.id}</p>
               </div>
               <button 
                 onClick={() => setSelectedLog(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
               >
                 ✕
               </button>
@@ -273,11 +332,15 @@ export const Auditoria = () => {
             <div className="space-y-3 pt-4 text-xs">
               <div className="flex justify-between py-1.5 border-b border-gray-50">
                 <span className="text-gray-500 font-medium">Timestamp:</span>
-                <span className="font-bold text-gray-800">{new Date(selectedLog.created_at).toLocaleString('pt-BR')}</span>
+                <span className="font-bold text-gray-800">{formatDate(selectedLog.created_at || selectedLog.timestamp)}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-gray-50">
                 <span className="text-gray-500 font-medium">Operador:</span>
-                <span className="font-bold text-gray-800">{selectedLog.user?.email || 'N/A'}</span>
+                <span className="font-bold text-gray-800">{selectedLog.user?.email || selectedLog.userEmail || 'Sistema'}</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-gray-50">
+                <span className="text-gray-500 font-medium">Perfil (Role):</span>
+                <span className="font-bold text-gray-800">{selectedLog.user?.role || selectedLog.userRole || 'GESTOR'}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-gray-50">
                 <span className="text-gray-500 font-medium">Ação:</span>
@@ -285,7 +348,7 @@ export const Auditoria = () => {
               </div>
               <div className="flex justify-between py-1.5 border-b border-gray-50">
                 <span className="text-gray-500 font-medium">Recurso:</span>
-                <span className="font-bold font-mono text-gray-800">{selectedLog.resource} ({selectedLog.resource_id || 'Global'})</span>
+                <span className="font-bold font-mono text-gray-800">{selectedLog.resource}</span>
               </div>
 
               <div>
@@ -296,10 +359,10 @@ export const Auditoria = () => {
               </div>
             </div>
 
-            <div className="pt-4 mt-2 border-t border-gray-100 flex justify-end">
+            <div className="pt-4 mt-4 border-t border-gray-100 flex justify-end">
               <button
                 onClick={() => setSelectedLog(null)}
-                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
               >
                 Fechar Evidência
               </button>
