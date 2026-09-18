@@ -3,17 +3,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { Layout } from './components/Layout.tsx';
 import { Login } from './pages/Login.tsx';
+import { DefinirSenha } from './pages/DefinirSenha.tsx';
 import { DashboardGestor } from './pages/DashboardGestor.tsx';
+import { DashboardResponsavel } from './pages/DashboardResponsavel.tsx';
 import { ListAlunos } from './pages/ListAlunos.tsx';
 import { NovoAluno } from './pages/NovoAluno.tsx';
 import { Turmas } from './pages/Turmas.tsx';
 import { Mensalidades } from './pages/Mensalidades.tsx';
 import { Professores } from './pages/Professores.tsx';
 import { Auditoria } from './pages/Auditoria.tsx';
+
+const AuthHashHandler = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && (hash.includes('type=invite') || hash.includes('type=recovery'))) {
+      if (location.pathname !== '/definir-senha') {
+        navigate(`/definir-senha${hash}`, { replace: true });
+      }
+    }
+  }, [location, navigate]);
+
+  return null;
+};
 
 const PrivateRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const { user, role, loading } = useAuth();
@@ -36,16 +55,33 @@ const PrivateRoute = ({ children, allowedRoles }: { children: React.ReactNode, a
   return <>{children}</>;
 };
 
+const DashboardRouter = () => {
+  const { role } = useAuth();
+  if (role === 'RESPONSAVEL') {
+    return <DashboardResponsavel />;
+  }
+  return <DashboardGestor />;
+};
+
 export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <AuthHashHandler />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/definir-senha" element={<DefinirSenha />} />
           
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index element={<DashboardGestor />} />
-            <Route path="alunos" element={<ListAlunos />} />
+            <Route index element={<DashboardRouter />} />
+            <Route 
+              path="alunos" 
+              element={
+                <PrivateRoute allowedRoles={['GESTOR', 'PROFESSOR']}>
+                  <ListAlunos />
+                </PrivateRoute>
+              } 
+            />
             <Route 
               path="alunos/novo" 
               element={
@@ -54,7 +90,14 @@ export default function App() {
                 </PrivateRoute>
               } 
             />
-            <Route path="turmas" element={<Turmas />} />
+            <Route 
+              path="turmas" 
+              element={
+                <PrivateRoute allowedRoles={['GESTOR', 'PROFESSOR']}>
+                  <Turmas />
+                </PrivateRoute>
+              } 
+            />
             <Route 
               path="mensalidades" 
               element={

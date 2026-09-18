@@ -83,6 +83,15 @@ export class StudentService {
             } else if (inviteData?.user) {
               guardianUserId = inviteData.user.id;
               inviteStatus = 'SENT';
+              await supabaseAdmin
+                .from('users')
+                .upsert({
+                  id: inviteData.user.id,
+                  email: cleanGuardianEmail,
+                  role: 'RESPONSAVEL',
+                  school_id: schoolId,
+                  status: 'ATIVO'
+                }, { onConflict: 'id' });
             }
           }
         } catch (authErr) {
