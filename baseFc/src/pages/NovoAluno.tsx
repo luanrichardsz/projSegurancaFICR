@@ -25,7 +25,7 @@ export const NovoAluno = () => {
     category: 'Sub-11',
     position: 'Meia',
     dominantFoot: 'DIREITO',
-    shirtNumber: 10,
+    shirtNumber: 10 as number | string,
     classId: '',
     allergies: '',
     medicalRestrictions: '',
@@ -56,6 +56,22 @@ export const NovoAluno = () => {
     loadClasses();
   }, [token]);
 
+  // Cálculo de idade exata do atleta (anos completos)
+  const calculateAge = (dobString: string): number => {
+    if (!dobString) return 0;
+    const parts = dobString.split('-').map(Number);
+    if (parts.length !== 3) return 0;
+    const [year, month, day] = parts;
+    const dob = new Date(year, month - 1, day);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -63,6 +79,17 @@ export const NovoAluno = () => {
     // Validações de Consistência e Integridade (OWASP Input Validation)
     if (formData.name.trim().length < 3) {
       setError('O nome do atleta deve ter no mínimo 3 caracteres.');
+      return;
+    }
+
+    if (!formData.dob) {
+      setError('A data de nascimento do atleta é obrigatória.');
+      return;
+    }
+
+    const athleteAge = calculateAge(formData.dob);
+    if (athleteAge < 6 || athleteAge > 16) {
+      setError(`A idade do atleta é de ${athleteAge} anos. A escolinha aceita apenas atletas entre 6 e 16 anos (categorias Sub-7 ao Sub-17).`);
       return;
     }
 
@@ -103,6 +130,12 @@ export const NovoAluno = () => {
         setError('O e-mail do responsável informado é inválido.');
         return;
       }
+    }
+
+    const shirt = Number(formData.shirtNumber);
+    if (!formData.shirtNumber || isNaN(shirt) || shirt < 1 || shirt > 99) {
+      setError('O número da camisa deve conter no máximo 2 dígitos (entre 1 e 99).');
+      return;
     }
 
     setLoading(true);
@@ -173,7 +206,19 @@ export const NovoAluno = () => {
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  // Limites de data de nascimento para atletas entre 6 e 16 anos completos
+  const now = new Date();
+  const formatYMD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Idade mínima: 6 anos completos (máxima data de nascimento: hoje há 6 anos)
+  const maxDob = formatYMD(new Date(now.getFullYear() - 6, now.getMonth(), now.getDate()));
+  // Idade máxima: 16 anos completos (mínima data de nascimento: hoje há 17 anos + 1 dia)
+  const minDob = formatYMD(new Date(now.getFullYear() - 17, now.getMonth(), now.getDate() + 1));
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -229,11 +274,19 @@ export const NovoAluno = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Data de Nascimento *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-gray-600 uppercase">
+                  Data de Nascimento *
+                </label>
+                <span className="text-2xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  6 a 16 anos (Sub-7 a Sub-17)
+                </span>
+              </div>
               <input 
                 type="date" 
                 required 
-                max={today}
+                min={minDob}
+                max={maxDob}
                 className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                 value={formData.dob}
                 onChange={e => setFormData({...formData, dob: e.target.value})}
@@ -334,13 +387,38 @@ export const NovoAluno = () => {
             <div>
               <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Número da Camisa (1 - 99) *</label>
               <input 
-                type="number" 
-                min={1} 
-                max={99} 
+                type="text" 
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={2}
+                placeholder="10"
                 required 
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-semibold"
                 value={formData.shirtNumber}
-                onChange={e => setFormData({...formData, shirtNumber: Number(e.target.value)})}
+                onKeyDown={e => {
+                  if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    return;
+                  }
+                  if (!/^\d$/.test(e.key)) {
+                    e.preventDefault();
+                    return;
+                  }
+                  const input = e.currentTarget;
+                  const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                  if (!hasSelection && input.value.length >= 2) {
+                    e.preventDefault();
+                  }
+                }}
+                onInput={e => {
+                  const input = e.currentTarget;
+                  if (input.value.length > 2) {
+                    input.value = input.value.slice(0, 2);
+                  }
+                }}
+                onChange={e => {
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 2);
+                  setFormData({ ...formData, shirtNumber: clean });
+                }}
               />
             </div>
 

@@ -31,7 +31,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
     category: 'Sub-11',
     position: 'Atacante',
     dominantFoot: 'DIREITO',
-    shirtNumber: 10,
+    shirtNumber: 10 as number | string,
     status: 'ATIVO',
     allergies: '',
     medicalRestrictions: '',
@@ -93,6 +93,32 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
     loadStudent();
   }, [studentId, token]);
 
+  // Cálculo de idade exata do atleta (anos completos)
+  const calculateAge = (dobString: string): number => {
+    if (!dobString) return 0;
+    const parts = dobString.split('-').map(Number);
+    if (parts.length !== 3) return 0;
+    const [year, month, day] = parts;
+    const dob = new Date(year, month - 1, day);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const now = new Date();
+  const formatYMD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const maxDob = formatYMD(new Date(now.getFullYear() - 6, now.getMonth(), now.getDate()));
+  const minDob = formatYMD(new Date(now.getFullYear() - 17, now.getMonth(), now.getDate() + 1));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || formData.name.trim().length < 3) {
@@ -103,6 +129,20 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
 
     if (!formData.dob) {
       setErrorMsg('Data de nascimento é obrigatória.');
+      setActiveTab('dados');
+      return;
+    }
+
+    const athleteAge = calculateAge(formData.dob);
+    if (athleteAge < 6 || athleteAge > 16) {
+      setErrorMsg(`A idade do atleta é de ${athleteAge} anos. A escolinha aceita apenas atletas entre 6 e 16 anos (categorias Sub-7 ao Sub-17).`);
+      setActiveTab('dados');
+      return;
+    }
+
+    const shirt = Number(formData.shirtNumber);
+    if (!formData.shirtNumber || isNaN(shirt) || shirt < 1 || shirt > 99) {
+      setErrorMsg('O número da camisa deve conter no máximo 2 dígitos (entre 1 e 99).');
       setActiveTab('dados');
       return;
     }
@@ -276,14 +316,28 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Data de Nascimento *</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Data de Nascimento * <span className="font-normal text-emerald-600 text-2xs">(6 a 16 anos)</span>
+                    </label>
                     <input 
                       type="date"
                       required
+                      min={minDob}
+                      max={maxDob}
                       value={formData.dob}
                       onChange={e => setFormData(prev => ({ ...prev, dob: e.target.value }))}
                       className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
                     />
+                    {formData.dob && (
+                      <p className="text-2xs text-gray-400 mt-1">
+                        {(() => {
+                          const age = calculateAge(formData.dob);
+                          return age >= 6 && age <= 16
+                            ? `Idade: ${age} anos (Válido)`
+                            : `Idade: ${age} anos (Fora do limite de 6 a 16 anos)`;
+                        })()}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -365,12 +419,37 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">Camisa (1-99) *</label>
                     <input 
-                      type="number"
-                      min={1}
-                      max={99}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={2}
+                      placeholder="10"
                       required
                       value={formData.shirtNumber}
-                      onChange={e => setFormData(prev => ({ ...prev, shirtNumber: Number(e.target.value) }))}
+                      onKeyDown={e => {
+                        if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                          return;
+                        }
+                        if (!/^\d$/.test(e.key)) {
+                          e.preventDefault();
+                          return;
+                        }
+                        const input = e.currentTarget;
+                        const hasSelection = (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+                        if (!hasSelection && input.value.length >= 2) {
+                          e.preventDefault();
+                        }
+                      }}
+                      onInput={e => {
+                        const input = e.currentTarget;
+                        if (input.value.length > 2) {
+                          input.value = input.value.slice(0, 2);
+                        }
+                      }}
+                      onChange={e => {
+                        const clean = e.target.value.replace(/\D/g, '').slice(0, 2);
+                        setFormData(prev => ({ ...prev, shirtNumber: clean }));
+                      }}
                       className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
                     />
                   </div>

@@ -16,8 +16,13 @@ export const Layout = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['GESTOR', 'PROFESSOR', 'RESPONSAVEL'] },
-    { label: 'Atletas', path: '/alunos', icon: Users, roles: ['GESTOR', 'PROFESSOR', 'RESPONSAVEL'] },
+    { 
+      label: role === 'RESPONSAVEL' ? 'Portal do Aluno' : 'Dashboard', 
+      path: '/', 
+      icon: LayoutDashboard, 
+      roles: ['GESTOR', 'PROFESSOR', 'RESPONSAVEL'] 
+    },
+    { label: 'Atletas', path: '/alunos', icon: Users, roles: ['GESTOR', 'PROFESSOR'] },
     { label: 'Matricular', path: '/alunos/novo', icon: UserPlus, roles: ['GESTOR'] },
     { label: 'Turmas & Treinos', path: '/turmas', icon: BookOpen, roles: ['GESTOR', 'PROFESSOR'] },
     { label: 'Mensalidades', path: '/mensalidades', icon: CreditCard, roles: ['GESTOR'] },

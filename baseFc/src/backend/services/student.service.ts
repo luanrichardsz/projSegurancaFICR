@@ -56,6 +56,7 @@ export class StudentService {
             inviteStatus = 'EXISTS';
           } else {
             // Convidar novo usuário via Supabase Auth Admin
+            const appUrl = process.env.APP_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
             const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
               cleanGuardianEmail,
               {
@@ -63,7 +64,8 @@ export class StudentService {
                   role: 'RESPONSAVEL',
                   schoolId: schoolId,
                   name: studentData.guardian.name.trim()
-                }
+                },
+                redirectTo: `${appUrl}/definir-senha`
               }
             );
 

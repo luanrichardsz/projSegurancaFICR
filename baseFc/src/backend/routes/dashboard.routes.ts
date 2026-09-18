@@ -6,6 +6,6 @@ import { requireRole } from '../middlewares/rbac.middleware.ts';
 const router = Router();
 
 router.use(requireAuth);
-router.get('/', requireRole(['GESTOR']), dashboardController.getMetrics);
+router.get('/', requireRole(['GESTOR', 'RESPONSAVEL']), dashboardController.getMetrics);
 
 export default router;
