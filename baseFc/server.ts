@@ -66,8 +66,9 @@ async function startServer() {
   // Middleware Global de Tratamento de Erros
   app.use(errorHandler);
 
-  // Integração com Vite (Frontend)
-  if (process.env.NODE_ENV !== 'production') {
+  // Integração com Vite (Frontend apenas em desenvolvimento local)
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
