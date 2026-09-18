@@ -12,6 +12,7 @@ export const NovoAluno = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -33,6 +34,7 @@ export const NovoAluno = () => {
     guardianName: '',
     guardianCpf: '',
     guardianPhone: '',
+    guardianEmail: '',
     guardianRelationship: 'Pai',
     // Emergência & Retirada
     emergencyName: '',
@@ -95,6 +97,14 @@ export const NovoAluno = () => {
       }
     }
 
+    if (formData.guardianEmail && formData.guardianEmail.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.guardianEmail.trim())) {
+        setError('O e-mail do responsável informado é inválido.');
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -126,6 +136,7 @@ export const NovoAluno = () => {
           name: formData.guardianName.trim(),
           cpf: cleanGuardianCpf || undefined,
           phone: cleanGuardianPhone,
+          email: formData.guardianEmail.trim() ? formData.guardianEmail.trim().toLowerCase() : undefined,
           relationship: formData.guardianRelationship
         };
       }
@@ -145,10 +156,16 @@ export const NovoAluno = () => {
         body: JSON.stringify(payload)
       }, token);
 
+      const hasEmail = !!formData.guardianEmail.trim();
+      setSuccessMsg(
+        hasEmail 
+          ? 'Aluno matriculado com sucesso! Convite de acesso ao Portal dos Pais enviado com segurança via Supabase.'
+          : 'Aluno matriculado com sucesso! Redirecionando...'
+      );
       setSuccess(true);
       setTimeout(() => {
         navigate('/alunos');
-      }, 1500);
+      }, hasEmail ? 2500 : 1500);
     } catch (err: any) {
       setError(err?.message || 'Falha ao cadastrar atleta.');
     } finally {
@@ -184,7 +201,7 @@ export const NovoAluno = () => {
       {success && (
         <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center space-x-3 text-sm">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-green-600" />
-          <span className="font-bold">Aluno matriculado com sucesso! Redirecionando...</span>
+          <span className="font-bold">{successMsg || 'Aluno matriculado com sucesso! Redirecionando...'}</span>
         </div>
       )}
 
@@ -441,6 +458,24 @@ export const NovoAluno = () => {
                 value={formData.guardianPhone}
                 onChange={e => setFormData({...formData, guardianPhone: maskPhone(e.target.value)})}
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
+                E-mail do Responsável (Opcional)
+                <span className="text-2xs font-normal text-emerald-600 ml-1">(Para acesso ao Portal)</span>
+              </label>
+              <input 
+                type="email" 
+                maxLength={100}
+                placeholder="Ex: responsavel@email.com"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
+                value={formData.guardianEmail}
+                onChange={e => setFormData({...formData, guardianEmail: e.target.value})}
+              />
+              <p className="text-2xs text-gray-400 mt-1">
+                Se informado, o Supabase enviará um convite seguro por e-mail para criar a senha de acesso ao Portal dos Pais.
+              </p>
             </div>
 
             <div className="md:col-span-2">

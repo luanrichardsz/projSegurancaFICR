@@ -3,7 +3,7 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
   X, User, ShieldCheck, Heart, CalendarCheck, CreditCard, 
-  Phone, AlertTriangle, CheckCircle2, XCircle, Clock
+  Phone, AlertTriangle, CheckCircle2, XCircle, Clock, Mail
 } from 'lucide-react';
 import { maskCPF, maskPhone } from '../utils/masks.ts';
 
@@ -139,8 +139,29 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 guardians.map((g: any) => (
                   <div key={g.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-gray-900 text-base">{g.name}</div>
-                      <div className="text-xs text-gray-500 mt-1">CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="font-bold text-gray-900 text-base">{g.name}</div>
+                        {g.hasPortalAccess ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Portal Ativo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                            Apenas Contato
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                        <div>CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
+                        {g.email ? (
+                          <div className="flex items-center text-gray-700 font-medium">
+                            <Mail className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
+                            {g.email}
+                          </div>
+                        ) : (
+                          <div className="text-gray-400 italic">Sem e-mail para acesso ao portal</div>
+                        )}
+                      </div>
                     </div>
                     <div className="text-right">
                       <a href={`tel:${g.phone}`} className="inline-flex items-center text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">

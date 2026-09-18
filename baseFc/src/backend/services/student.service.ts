@@ -34,13 +34,68 @@ export class StudentService {
     }
 
     // 2. Inserir Responsável (se fornecido)
+    let guardianUserId: string | null = null;
+    let inviteStatus: 'SENT' | 'EXISTS' | 'FAILED' | 'NONE' = 'NONE';
+    const rawGuardianEmail = studentData.guardian?.email;
+    const cleanGuardianEmail = rawGuardianEmail && typeof rawGuardianEmail === 'string' && rawGuardianEmail.trim()
+      ? rawGuardianEmail.trim().toLowerCase()
+      : null;
+
     if (studentData.guardian && studentData.guardian.name) {
+      // 2.1 Se informou e-mail, verificar usuário existente ou enviar convite Supabase Auth
+      if (cleanGuardianEmail) {
+        try {
+          const { data: existingUser } = await supabaseAdmin
+            .from('users')
+            .select('id, email, school_id')
+            .eq('email', cleanGuardianEmail)
+            .single();
+
+          if (existingUser) {
+            guardianUserId = existingUser.id;
+            inviteStatus = 'EXISTS';
+          } else {
+            // Convidar novo usuário via Supabase Auth Admin
+            const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+              cleanGuardianEmail,
+              {
+                data: {
+                  role: 'RESPONSAVEL',
+                  schoolId: schoolId,
+                  name: studentData.guardian.name.trim()
+                }
+              }
+            );
+
+            if (inviteErr) {
+              console.warn('[Guardian Invite] Aviso ao enviar convite:', inviteErr.message);
+              // Caso o usuário já exista no auth.users mas ainda não na tabela users:
+              const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+              const matchedAuthUser = (authList?.users || []).find((u: any) => u.email?.toLowerCase() === cleanGuardianEmail);
+              if (matchedAuthUser) {
+                guardianUserId = matchedAuthUser.id;
+                inviteStatus = 'EXISTS';
+              } else {
+                inviteStatus = 'FAILED';
+              }
+            } else if (inviteData?.user) {
+              guardianUserId = inviteData.user.id;
+              inviteStatus = 'SENT';
+            }
+          }
+        } catch (authErr) {
+          console.error('[Guardian Invite] Erro inesperado ao processar convite:', authErr);
+          inviteStatus = 'FAILED';
+        }
+      }
+
       const cleanGuardianCpf = studentData.guardian.cpf ? studentData.guardian.cpf.replace(/\D/g, '') : null;
       const cleanGuardianPhone = studentData.guardian.phone ? studentData.guardian.phone.replace(/\D/g, '') : '';
       const { data: newGuardian } = await supabaseAdmin
         .from('guardians')
         .insert([{
           school_id: schoolId,
+          user_id: guardianUserId,
           name: studentData.guardian.name.trim(),
           cpf: cleanGuardianCpf || null,
           phone: cleanGuardianPhone,
@@ -104,7 +159,10 @@ export class StudentService {
         studentId: newStudent.id, 
         name: newStudent.name, 
         category: newStudent.category,
-        shirtNumber: newStudent.shirt_number 
+        shirtNumber: newStudent.shirt_number,
+        guardianEmail: cleanGuardianEmail,
+        guardianUserId,
+        guardianInviteStatus: inviteStatus
       }
     }]);
 
@@ -113,7 +171,12 @@ export class StudentService {
       schoolId: newStudent.school_id,
       dominantFoot: newStudent.dominant_foot,
       shirtNumber: newStudent.shirt_number,
-      enrolledAt: newStudent.enrolled_at
+      enrolledAt: newStudent.enrolled_at,
+      guardianInvite: {
+        email: cleanGuardianEmail,
+        status: inviteStatus,
+        userId: guardianUserId
+      }
     };
   }
 
@@ -192,10 +255,29 @@ export class StudentService {
     // 2. Responsáveis
     const { data: guardianLinks } = await supabaseAdmin
       .from('guardian_students')
-      .select('guardians (*)')
+      .select(`
+        guardians (
+          *,
+          users (
+            id,
+            email,
+            role,
+            status
+          )
+        )
+      `)
       .eq('student_id', studentId);
 
-    const guardians = (guardianLinks || []).map((gl: any) => gl.guardians).filter(Boolean);
+    const guardians = (guardianLinks || []).map((gl: any) => {
+      const g = gl.guardians;
+      if (!g) return null;
+      return {
+        ...g,
+        email: g.users?.email || null,
+        hasPortalAccess: !!g.user_id,
+        userStatus: g.users?.status || null
+      };
+    }).filter(Boolean);
 
     // 3. Contatos de Emergência
     const { data: emergencyContacts } = await supabaseAdmin

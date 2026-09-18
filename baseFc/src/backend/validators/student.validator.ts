@@ -20,6 +20,7 @@ export const createStudentSchema = z.object({
     name: z.string().min(3, 'Nome do responsável obrigatório').max(100),
     cpf: z.string().max(14).optional().or(z.literal('')),
     phone: z.string().min(8, 'Telefone do responsável obrigatório').max(15),
+    email: z.string().email('E-mail do responsável inválido').optional().nullable().or(z.literal('')),
     relationship: z.string().max(50).optional().default('Pai/Mãe')
   }).optional().nullable(),
   // Contato de Emergência
@@ -54,6 +55,7 @@ export const updateStudentSchema = z.object({
     name: z.string().min(3, 'Nome do responsável obrigatório').max(100),
     cpf: z.string().max(14).optional().nullable().or(z.literal('')),
     phone: z.string().min(8, 'Telefone do responsável obrigatório').max(15),
+    email: z.string().email('E-mail do responsável inválido').optional().nullable().or(z.literal('')),
     relationship: z.string().max(50).optional().default('Pai/Mãe')
   }).optional().nullable(),
   emergencyContact: z.object({
