@@ -81,22 +81,71 @@ export class DashboardService {
     };
   }
 
-  async getGuardianDashboard(userId: string) {
-    // 1. Localizar o responsável pelo user_id do Supabase Auth
-    const { data: guardian } = await supabaseAdmin
-      .from('guardians')
-      .select('id, name, phone, school_id')
-      .eq('user_id', userId)
-      .maybeSingle();
+  async getGuardianDashboard(userId: string, userEmail?: string, schoolId?: string | null, userMetadata?: any) {
+    const targetSchoolId = schoolId || '00000000-0000-0000-0000-000000000001';
 
-    if (!guardian) {
+    // 1. Garantir que o usuário exista em public.users
+    if (userEmail) {
+      try {
+        await supabaseAdmin.from('users').upsert({
+          id: userId,
+          email: userEmail.toLowerCase().trim(),
+          role: 'RESPONSAVEL',
+          school_id: targetSchoolId,
+          status: 'ATIVO'
+        }, { onConflict: 'id' });
+      } catch (ignore) {}
+    }
+
+    // 2. Localizar registros de responsável vinculados ao user_id
+    let { data: guardianList } = await supabaseAdmin
+      .from('guardians')
+      .select('id, name, phone, school_id, user_id')
+      .eq('user_id', userId);
+
+    // 3. Auto-cura / Auto-vínculo: caso ainda não haja vínculo para este user_id, buscar por nome de metadata ou telefone
+    if (!guardianList || guardianList.length === 0) {
+      const userName = userMetadata?.name || '';
+      if (userName) {
+        const firstName = userName.split(' ')[0].trim();
+        const { data: unlinked } = await supabaseAdmin
+          .from('guardians')
+          .select('id, name, phone, school_id, user_id')
+          .is('user_id', null)
+          .ilike('name', `%${firstName}%`);
+
+        if (unlinked && unlinked.length > 0) {
+          for (const u of unlinked) {
+            await supabaseAdmin
+              .from('guardians')
+              .update({ user_id: userId })
+              .eq('id', u.id);
+          }
+          const { data: reloaded } = await supabaseAdmin
+            .from('guardians')
+            .select('id, name, phone, school_id, user_id')
+            .eq('user_id', userId);
+          guardianList = reloaded || [];
+        }
+      }
+    }
+
+    if (!guardianList || guardianList.length === 0) {
       return {
-        guardian: null,
+        guardian: {
+          id: userId,
+          name: userMetadata?.name || userEmail?.split('@')[0] || 'Responsável',
+          phone: '',
+          school_id: targetSchoolId
+        },
         students: []
       };
     }
 
-    // 2. Buscar vínculos com alunos
+    const primaryGuardian = guardianList[0];
+    const guardianIds = guardianList.map(g => g.id);
+
+    // 4. Buscar vínculos com alunos em todos os registros de responsável deste usuário
     const { data: guardianStudents } = await supabaseAdmin
       .from('guardian_students')
       .select(`
@@ -118,13 +167,15 @@ export class DashboardService {
           enrolled_at
         )
       `)
-      .eq('guardian_id', guardian.id);
+      .in('guardian_id', guardianIds);
 
     const studentsData: any[] = [];
+    const seenStudentIds = new Set<string>();
 
     for (const gs of guardianStudents || []) {
       const student: any = gs.students;
-      if (!student) continue;
+      if (!student || seenStudentIds.has(student.id)) continue;
+      seenStudentIds.add(student.id);
 
       const studentId = student.id;
 
@@ -211,7 +262,7 @@ export class DashboardService {
     }
 
     return {
-      guardian,
+      guardian: primaryGuardian,
       students: studentsData
     };
   }

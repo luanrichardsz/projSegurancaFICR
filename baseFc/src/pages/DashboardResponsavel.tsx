@@ -84,7 +84,7 @@ export const DashboardResponsavel = () => {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 mb-3">
             <ShieldCheck className="w-3.5 h-3.5" /> Portal da Família • Base FC
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black">Olá, {guardian?.name || user?.email || 'Responsável'}!</h1>
+          <h1 className="text-2xl sm:text-3xl font-black">Olá, {guardian?.name || 'Responsável'}!</h1>
           <p className="text-emerald-100/80 text-sm mt-1">
             Seja bem-vindo ao portal oficial de acompanhamento do seu atleta na Escolinha Base FC.
           </p>

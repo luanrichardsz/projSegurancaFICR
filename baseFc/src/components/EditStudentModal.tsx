@@ -37,6 +37,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
     medicalRestrictions: '',
     medications: '',
     guardianName: '',
+    guardianEmail: '',
     guardianPhone: '',
     guardianRelationship: 'Pai/Mãe',
     guardianCpf: '',
@@ -72,6 +73,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
             medicalRestrictions: s.medicalRestrictions || s.medical_restrictions || '',
             medications: s.medications || '',
             guardianName: g?.name || '',
+            guardianEmail: g?.email || '',
             guardianPhone: g?.phone ? maskPhone(g.phone) : '',
             guardianRelationship: g?.relationship || 'Pai/Mãe',
             guardianCpf: g?.cpf ? maskCPF(g.cpf) : '',
@@ -170,6 +172,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
       if (formData.guardianName.trim()) {
         payload.guardian = {
           name: formData.guardianName.trim(),
+          email: formData.guardianEmail.trim() || undefined,
           phone: unmask(formData.guardianPhone) || '000000000',
           cpf: unmask(formData.guardianCpf) || null,
           relationship: formData.guardianRelationship || 'Pai/Mãe'
@@ -595,6 +598,21 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
                         className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">E-mail do Responsável (Acesso ao Portal da Família)</label>
+                    <input 
+                      type="email"
+                      maxLength={100}
+                      placeholder="email.responsavel@exemplo.com"
+                      value={formData.guardianEmail}
+                      onChange={e => setFormData(prev => ({ ...prev, guardianEmail: e.target.value }))}
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 font-medium text-gray-900"
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Vincula este aluno ao login do responsável. Ao salvar, o responsável poderá visualizar o aluno imediatamente em seu portal.
+                    </p>
                   </div>
                 </div>
 

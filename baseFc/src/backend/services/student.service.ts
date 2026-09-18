@@ -88,6 +88,17 @@ export class StudentService {
               if (matchedAuthUser) {
                 guardianUserId = matchedAuthUser.id;
                 inviteStatus = 'EXISTS';
+                // Garantir existência em public.users antes da FK em public.guardians
+                await supabaseAdmin
+                  .from('users')
+                  .upsert({
+                    id: matchedAuthUser.id,
+                    email: cleanGuardianEmail,
+                    role: 'RESPONSAVEL',
+                    school_id: schoolId,
+                    status: 'ATIVO'
+                  }, { onConflict: 'id' });
+
                 // Disparar redefinição com a URL correta caso já estivesse cadastrado
                 try {
                   await supabaseAdmin.auth.resetPasswordForEmail(cleanGuardianEmail, {
@@ -121,21 +132,64 @@ export class StudentService {
 
       const cleanGuardianCpf = studentData.guardian.cpf ? studentData.guardian.cpf.replace(/\D/g, '') : null;
       const cleanGuardianPhone = studentData.guardian.phone ? studentData.guardian.phone.replace(/\D/g, '') : '';
-      const { data: newGuardian } = await supabaseAdmin
-        .from('guardians')
-        .insert([{
-          school_id: schoolId,
-          user_id: guardianUserId,
-          name: studentData.guardian.name.trim(),
-          cpf: cleanGuardianCpf || null,
-          phone: cleanGuardianPhone,
-        }])
-        .select()
-        .single();
+      
+      // Reutilizar responsável existente caso já cadastrado com o mesmo user_id ou telefone
+      let guardianIdToLink: string | null = null;
+      if (guardianUserId) {
+        const { data: existingG } = await supabaseAdmin
+          .from('guardians')
+          .select('id')
+          .eq('user_id', guardianUserId)
+          .maybeSingle();
 
-      if (newGuardian) {
+        if (existingG?.id) {
+          guardianIdToLink = existingG.id;
+          await supabaseAdmin
+            .from('guardians')
+            .update({
+              name: studentData.guardian.name.trim(),
+              phone: cleanGuardianPhone || undefined,
+              cpf: cleanGuardianCpf || undefined
+            })
+            .eq('id', existingG.id);
+        }
+      }
+
+      if (!guardianIdToLink) {
+        const { data: newGuardian, error: insErr } = await supabaseAdmin
+          .from('guardians')
+          .insert([{
+            school_id: schoolId,
+            user_id: guardianUserId,
+            name: studentData.guardian.name.trim(),
+            cpf: cleanGuardianCpf || null,
+            phone: cleanGuardianPhone,
+          }])
+          .select()
+          .single();
+
+        if (newGuardian) {
+          guardianIdToLink = newGuardian.id;
+        } else if (insErr && guardianUserId) {
+          // Fallback defensivo: insere sem user_id caso haja restrição
+          console.warn('[Guardian Insert] Tentando fallback:', insErr.message);
+          const { data: fbG } = await supabaseAdmin
+            .from('guardians')
+            .insert([{
+              school_id: schoolId,
+              name: studentData.guardian.name.trim(),
+              cpf: cleanGuardianCpf || null,
+              phone: cleanGuardianPhone,
+            }])
+            .select()
+            .single();
+          if (fbG) guardianIdToLink = fbG.id;
+        }
+      }
+
+      if (guardianIdToLink) {
         await supabaseAdmin.from('guardian_students').insert([{
-          guardian_id: newGuardian.id,
+          guardian_id: guardianIdToLink,
           student_id: newStudent.id
         }]);
       }
@@ -412,14 +466,63 @@ export class StudentService {
     if (updateData.guardian && updateData.guardian.name) {
       const cleanGuardianCpf = updateData.guardian.cpf ? updateData.guardian.cpf.replace(/\D/g, '') : null;
       const cleanGuardianPhone = updateData.guardian.phone ? updateData.guardian.phone.replace(/\D/g, '') : '';
+      const rawGuardianEmail = updateData.guardian.email;
+      const cleanGuardianEmail = rawGuardianEmail && typeof rawGuardianEmail === 'string' && rawGuardianEmail.trim()
+        ? rawGuardianEmail.trim().toLowerCase()
+        : null;
 
       const { data: existingLink } = await supabaseAdmin
         .from('guardian_students')
-        .select('guardian_id')
+        .select('guardian_id, guardians (id, user_id)')
         .eq('student_id', studentId)
         .maybeSingle();
 
-      if (existingLink?.guardian_id) {
+      let targetGuardianId = existingLink?.guardian_id;
+
+      // Se informou e-mail na edição e precisa vincular ou convidar usuário
+      if (cleanGuardianEmail) {
+        let guardianUserId: string | null = null;
+        const { data: exUser } = await supabaseAdmin.from('users').select('id').eq('email', cleanGuardianEmail).maybeSingle();
+        if (exUser) {
+          guardianUserId = exUser.id;
+        } else {
+          const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+          const matched = (authList?.users || []).find((u: any) => u.email?.toLowerCase() === cleanGuardianEmail);
+          if (matched) {
+            guardianUserId = matched.id;
+            await supabaseAdmin.from('users').upsert({
+              id: matched.id,
+              email: cleanGuardianEmail,
+              role: 'RESPONSAVEL',
+              school_id: schoolId,
+              status: 'ATIVO'
+            }, { onConflict: 'id' });
+          } else {
+            const rawAppUrl = process.env.APP_URL || process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? 'https://https-basefc-onrender-com.onrender.com' : 'http://localhost:5173');
+            const appUrl = rawAppUrl.replace(/\/+$/, '');
+            const { data: inv } = await supabaseAdmin.auth.admin.inviteUserByEmail(cleanGuardianEmail, {
+              data: { role: 'RESPONSAVEL', schoolId, name: updateData.guardian.name.trim() },
+              redirectTo: `${appUrl}/definir-senha`
+            });
+            if (inv?.user) {
+              guardianUserId = inv.user.id;
+              await supabaseAdmin.from('users').upsert({
+                id: inv.user.id,
+                email: cleanGuardianEmail,
+                role: 'RESPONSAVEL',
+                school_id: schoolId,
+                status: 'ATIVO'
+              }, { onConflict: 'id' });
+            }
+          }
+        }
+
+        if (targetGuardianId && guardianUserId) {
+          await supabaseAdmin.from('guardians').update({ user_id: guardianUserId }).eq('id', targetGuardianId);
+        }
+      }
+
+      if (targetGuardianId) {
         await supabaseAdmin
           .from('guardians')
           .update({
@@ -427,7 +530,7 @@ export class StudentService {
             cpf: cleanGuardianCpf || null,
             phone: cleanGuardianPhone
           })
-          .eq('id', existingLink.guardian_id);
+          .eq('id', targetGuardianId);
       } else {
         const { data: newGuardian } = await supabaseAdmin
           .from('guardians')
@@ -521,25 +624,57 @@ export class StudentService {
   }
 
   async reinviteGuardian(schoolId: string, studentId: string, guardianId?: string, clientOrigin?: string) {
-    // 1. Obter o responsável e o e-mail
-    let query = supabaseAdmin
-      .from('guardians')
-      .select('id, name, phone, user_id, student_id, users ( id, email )')
+    // 1. Obter o responsável através da tabela de vínculo guardian_students
+    let linkQuery = supabaseAdmin
+      .from('guardian_students')
+      .select(`
+        guardian_id,
+        guardians (
+          id,
+          name,
+          phone,
+          user_id,
+          users (
+            id,
+            email
+          )
+        )
+      `)
       .eq('student_id', studentId);
 
     if (guardianId) {
-      query = query.eq('id', guardianId);
+      linkQuery = linkQuery.eq('guardian_id', guardianId);
     }
 
-    const { data: guardians, error: gErr } = await query;
-    if (gErr || !guardians || guardians.length === 0) {
+    const { data: links, error: lErr } = await linkQuery;
+    if (lErr || !links || links.length === 0) {
       throw new Error('Responsável não encontrado para este atleta.');
     }
 
-    const guardian = guardians[0];
-    const guardianEmail = (guardian as any).users?.email;
+    const guardian: any = links[0].guardians;
+    let guardianEmail = guardian?.users?.email;
+
+    // Se o responsável ainda não tiver e-mail associado no user, tentar vincular por nome na base auth
+    if (!guardianEmail && guardian?.name) {
+      const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+      const matched = (authList?.users || []).find((u: any) =>
+        u.user_metadata?.name?.toLowerCase() === guardian.name.toLowerCase()
+      );
+      if (matched?.email) {
+        guardianEmail = matched.email;
+        await supabaseAdmin.from('users').upsert({
+          id: matched.id,
+          email: matched.email,
+          role: 'RESPONSAVEL',
+          school_id: schoolId,
+          status: 'ATIVO'
+        }, { onConflict: 'id' });
+        await supabaseAdmin.from('guardians').update({ user_id: matched.id }).eq('id', guardian.id);
+      }
+    }
+
     if (!guardianEmail) {
-      throw new Error('Este responsável não possui e-mail cadastrado para acesso ao portal.');
+      throw new Error('Este responsável não possui e-mail cadastrado para acesso ao portal. Edite o atleta para informar o e-mail.');
     }
 
     const rawAppUrl = 

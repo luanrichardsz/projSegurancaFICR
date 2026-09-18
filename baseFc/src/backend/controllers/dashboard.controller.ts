@@ -6,7 +6,12 @@ export class DashboardController {
   async getMetrics(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (req.user?.role === 'RESPONSAVEL') {
-        const guardianData = await dashboardService.getGuardianDashboard(req.user.uid);
+        const guardianData = await dashboardService.getGuardianDashboard(
+          req.user.uid,
+          req.user.email,
+          req.user.schoolId,
+          req.user.rawUser?.user_metadata
+        );
         return res.json(guardianData);
       }
 
