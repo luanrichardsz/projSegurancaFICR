@@ -3,16 +3,51 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
   ShieldCheck, Calendar, Clock, CreditCard, Heart, AlertCircle, 
-  CheckCircle2, XCircle, ChevronRight, User, Award, MapPin, 
+  CheckCircle2, XCircle, ChevronRight, ChevronLeft, User, Award, MapPin, 
   HelpCircle, CalendarCheck, Sparkles, Activity
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { maskCPF, maskPhone } from '../utils/masks.ts';
+
+const cardVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 40 : -40,
+    opacity: 0,
+    filter: 'blur(2px)'
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    filter: 'blur(0px)',
+    transition: {
+      duration: 0.28,
+      ease: 'easeOut' as const
+    }
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -40 : 40,
+    opacity: 0,
+    filter: 'blur(2px)',
+    transition: {
+      duration: 0.22,
+      ease: 'easeIn' as const
+    }
+  })
+};
 
 export const DashboardResponsavel = () => {
   const { token, user } = useAuth();
   const [data, setData] = useState<{ guardian: any; students: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedStudentIndex, setSelectedStudentIndex] = useState(0);
+  const [currentClassIndex, setCurrentClassIndex] = useState(0);
+  const [carouselDirection, setCarouselDirection] = useState(1);
+
+  // Reset do índice do carrossel ao alternar de atleta
+  useEffect(() => {
+    setCurrentClassIndex(0);
+    setCarouselDirection(1);
+  }, [selectedStudentIndex]);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -75,7 +110,22 @@ export const DashboardResponsavel = () => {
   const attendance = currentStudent.attendance || { totalTrainings: 0, presences: 0, absences: 0, justified: 0, attendanceRate: 100, history: [] };
   const payments = currentStudent.payments || [];
   const classes = currentStudent.classes || [];
-  const primaryClass = classes[0] || null;
+  const activeClassIndex = classes.length > 0 
+    ? ((currentClassIndex % classes.length) + classes.length) % classes.length 
+    : 0;
+  const currentClass = classes[activeClassIndex] || null;
+
+  const handlePrevClass = () => {
+    if (classes.length <= 1) return;
+    setCarouselDirection(-1);
+    setCurrentClassIndex(prev => (prev - 1 + classes.length) % classes.length);
+  };
+
+  const handleNextClass = () => {
+    if (classes.length <= 1) return;
+    setCarouselDirection(1);
+    setCurrentClassIndex(prev => (prev + 1) % classes.length);
+  };
 
   return (
     <div className="space-y-6">
@@ -148,8 +198,12 @@ export const DashboardResponsavel = () => {
             <span className="text-sm font-black text-emerald-700">#{currentStudent.shirtNumber || '--'}</span>
           </div>
           <div className="px-3 py-2 bg-gray-50 rounded-xl text-center">
-            <span className="block text-2xs text-gray-400 font-bold uppercase">Turma</span>
-            <span className="text-sm font-bold text-gray-800">{primaryClass?.name || 'Aguardando'}</span>
+            <span className="block text-2xs text-gray-400 font-bold uppercase">Turmas</span>
+            <span className="text-sm font-bold text-gray-800">
+              {classes.length > 1 
+                ? `${classes.length} turmas` 
+                : currentClass?.name || 'Aguardando'}
+            </span>
           </div>
           <div className="px-3 py-2 bg-gray-50 rounded-xl text-center">
             <span className="block text-2xs text-gray-400 font-bold uppercase">Mensalidades</span>
@@ -255,49 +309,136 @@ export const DashboardResponsavel = () => {
         {/* Coluna 2: Turma & Horários */}
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
-              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-                <CalendarCheck className="w-5 h-5" />
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <CalendarCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Turma & Horários de Treino</h3>
+                  <p className="text-2xs text-gray-400">Programação semanal</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-900 text-sm">Turma & Horários de Treino</h3>
-                <p className="text-2xs text-gray-400">Programação semanal</p>
-              </div>
+
+              {classes.length > 1 && (
+                <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200/60 px-2 py-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={handlePrevClass}
+                    className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700 transition-colors cursor-pointer"
+                    title="Turma anterior"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="text-2xs font-bold text-emerald-900 px-1 select-none">
+                    {activeClassIndex + 1} de {classes.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleNextClass}
+                    className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700 transition-colors cursor-pointer"
+                    title="Próxima turma"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
-            {primaryClass ? (
+            {classes.length > 0 && currentClass ? (
               <div className="space-y-4 mt-4">
-                <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-emerald-800">{primaryClass.name}</span>
-                    <span className="text-2xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                      {primaryClass.category}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-xs text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{primaryClass.daysOfWeek?.join(' • ') || 'Dias a definir'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>{primaryClass.startTime?.slice(0, 5) || '--:--'} às {primaryClass.endTime?.slice(0, 5) || '--:--'}</span>
-                    </div>
-                    {primaryClass.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{primaryClass.location}</span>
+                {/* Carrossel Animado da Turma - muda exclusivamente o card da turma */}
+                <div className="relative overflow-hidden min-h-[195px] rounded-2xl">
+                  <AnimatePresence mode="wait" custom={carouselDirection}>
+                    <motion.div
+                      key={currentClass.id || activeClassIndex}
+                      custom={carouselDirection}
+                      variants={cardVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 shadow-2xs space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-emerald-900">{currentClass.name}</span>
+                          {classes.length > 1 && (
+                            <span className="text-2xs font-semibold px-1.5 py-0.5 rounded-md bg-emerald-200/60 text-emerald-800">
+                              Turma {activeClassIndex + 1}/{classes.length}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-2xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          {currentClass.category}
+                        </span>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2 pt-1">
-                      <User className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-semibold text-gray-700">Professor: {primaryClass.teacherName}</span>
-                    </div>
-                  </div>
+
+                      <div className="space-y-2 text-xs text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{currentClass.daysOfWeek?.join(' • ') || 'Dias a definir'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{currentClass.startTime?.slice(0, 5) || '--:--'} às {currentClass.endTime?.slice(0, 5) || '--:--'}</span>
+                        </div>
+                        {currentClass.location && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>{currentClass.location}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 pt-1 border-t border-emerald-100/60">
+                          <User className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="font-semibold text-gray-700">Professor: {currentClass.teacherName}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
-                {/* Dicas para o Responsável */}
+                {/* Indicadores / Dots de Navegação do Carrossel */}
+                {classes.length > 1 && (
+                  <div className="flex items-center justify-between px-1 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={handlePrevClass}
+                      className="inline-flex items-center gap-1 text-2xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" /> Anterior
+                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      {classes.map((cl: any, idx: number) => (
+                        <button
+                          key={cl.id || idx}
+                          type="button"
+                          onClick={() => {
+                            setCarouselDirection(idx > activeClassIndex ? 1 : -1);
+                            setCurrentClassIndex(idx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                            idx === activeClassIndex 
+                              ? 'w-5 bg-emerald-600' 
+                              : 'w-1.5 bg-gray-300 hover:bg-gray-400'
+                          }`}
+                          aria-label={`Ver turma ${idx + 1}: ${cl.name}`}
+                          title={cl.name}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleNextClass}
+                      className="inline-flex items-center gap-1 text-2xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                    >
+                      Próxima <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Dicas para o Responsável (inalteradas, ficam abaixo do card da turma) */}
                 <div className="p-4 bg-gray-50 rounded-2xl space-y-1.5 text-xs text-gray-600">
                   <p className="font-bold text-gray-800">Recomendações para os treinos:</p>
                   <ul className="list-disc list-inside text-2xs space-y-1 text-gray-500">
