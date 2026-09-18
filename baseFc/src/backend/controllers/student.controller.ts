@@ -10,8 +10,11 @@ export class StudentController {
       const schoolId = req.user?.schoolId;
       if (!schoolId) return res.status(400).json({ error: 'Escola não identificada.' });
 
+      const originHeader = req.get('origin') || (req.get('referer') ? new URL(req.get('referer')!).origin : undefined);
+      const clientOrigin = (req.body && req.body.clientOrigin) || originHeader;
+
       const validatedData = createStudentSchema.parse(req.body);
-      const newStudent = await studentService.createStudent(schoolId, validatedData, req.user!.uid);
+      const newStudent = await studentService.createStudent(schoolId, validatedData, req.user!.uid, clientOrigin);
       
       return res.status(201).json(newStudent);
     } catch (error) {
@@ -83,6 +86,24 @@ export class StudentController {
 
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const result = await studentService.deleteStudent(id, schoolId, req.user!.uid);
+      return res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async reinviteGuardian(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.user?.schoolId;
+      if (!schoolId) return res.status(400).json({ error: 'Escola não identificada.' });
+
+      const studentId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const guardianId = Array.isArray(req.params.guardianId) ? req.params.guardianId[0] : req.params.guardianId;
+
+      const originHeader = req.get('origin') || (req.get('referer') ? new URL(req.get('referer')!).origin : undefined);
+      const clientOrigin = (req.body && req.body.clientOrigin) || originHeader;
+
+      const result = await studentService.reinviteGuardian(schoolId, studentId, guardianId, clientOrigin);
       return res.json(result);
     } catch (error) {
       next(error);

@@ -23,4 +23,8 @@ router.get('/:id/profile', checkStudentAccess, studentController.getProfile);
 router.put('/:id', requireRole(['GESTOR']), studentController.update);
 router.delete('/:id', requireRole(['GESTOR']), studentController.delete);
 
+// Apenas Gestor pode reenviar convite ou link de acesso para o responsável
+router.post('/:id/guardians/:guardianId/invite', requireRole(['GESTOR']), studentController.reinviteGuardian);
+router.post('/:id/reinvite-guardian', requireRole(['GESTOR']), studentController.reinviteGuardian);
+
 export default router;

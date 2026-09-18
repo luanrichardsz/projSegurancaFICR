@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '../config/supabase.ts';
 
 export class StudentService {
-  async createStudent(schoolId: string, studentData: any, createdBy: string) {
+  async createStudent(schoolId: string, studentData: any, createdBy: string, clientOrigin?: string) {
     // 1. Inserir Aluno
     const cleanStudentCpf = (studentData.cpf && studentData.cpf.trim()) ? studentData.cpf.replace(/\D/g, '') : '00000000000';
     const studentRecord = {
@@ -56,7 +56,17 @@ export class StudentService {
             inviteStatus = 'EXISTS';
           } else {
             // Convidar novo usuário via Supabase Auth Admin
-            const rawAppUrl = process.env.APP_URL || process.env.FRONTEND_URL || process.env.VITE_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+            // Determinar a URL do frontend para envio de convites e definição de senha
+            const rawAppUrl = 
+              process.env.APP_URL || 
+              clientOrigin || 
+              studentData.clientOrigin ||
+              process.env.FRONTEND_URL || 
+              process.env.VITE_APP_URL || 
+              (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+              process.env.RENDER_EXTERNAL_URL ||
+              (process.env.NODE_ENV === 'production' ? 'https://basefc.onrender.com' : 'http://localhost:5173');
+
             const appUrl = rawAppUrl.replace(/\/+$/, '');
             const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
               cleanGuardianEmail,
@@ -78,6 +88,14 @@ export class StudentService {
               if (matchedAuthUser) {
                 guardianUserId = matchedAuthUser.id;
                 inviteStatus = 'EXISTS';
+                // Disparar redefinição com a URL correta caso já estivesse cadastrado
+                try {
+                  await supabaseAdmin.auth.resetPasswordForEmail(cleanGuardianEmail, {
+                    redirectTo: `${appUrl}/definir-senha`
+                  });
+                } catch (rErr) {
+                  console.warn('[Guardian Invite] Aviso ao enviar redefinição para usuário existente:', rErr);
+                }
               } else {
                 inviteStatus = 'FAILED';
               }
@@ -500,6 +518,70 @@ export class StudentService {
     }]);
 
     return { message: 'Aluno inativado com sucesso.' };
+  }
+
+  async reinviteGuardian(schoolId: string, studentId: string, guardianId?: string, clientOrigin?: string) {
+    // 1. Obter o responsável e o e-mail
+    let query = supabaseAdmin
+      .from('guardians')
+      .select('id, name, phone, user_id, student_id, users ( id, email )')
+      .eq('student_id', studentId);
+
+    if (guardianId) {
+      query = query.eq('id', guardianId);
+    }
+
+    const { data: guardians, error: gErr } = await query;
+    if (gErr || !guardians || guardians.length === 0) {
+      throw new Error('Responsável não encontrado para este atleta.');
+    }
+
+    const guardian = guardians[0];
+    const guardianEmail = (guardian as any).users?.email;
+    if (!guardianEmail) {
+      throw new Error('Este responsável não possui e-mail cadastrado para acesso ao portal.');
+    }
+
+    const rawAppUrl = 
+      process.env.APP_URL || 
+      clientOrigin || 
+      process.env.FRONTEND_URL || 
+      process.env.VITE_APP_URL || 
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
+      process.env.RENDER_EXTERNAL_URL ||
+      (process.env.NODE_ENV === 'production' ? 'https://basefc.onrender.com' : 'http://localhost:5173');
+
+    const appUrl = rawAppUrl.replace(/\/+$/, '');
+    const redirectTo = `${appUrl}/definir-senha`;
+
+    // Disparar e-mail de redefinição/definição de senha com a URL correta
+    const { error: resetErr } = await supabaseAdmin.auth.resetPasswordForEmail(guardianEmail, {
+      redirectTo
+    });
+
+    if (resetErr) {
+      throw new Error(`Falha ao enviar convite: ${resetErr.message}`);
+    }
+
+    let directLink: string | null = null;
+    try {
+      const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: guardianEmail,
+        options: { redirectTo }
+      });
+      if (linkData?.properties?.action_link) {
+        directLink = linkData.properties.action_link;
+      }
+    } catch (ignore) {}
+
+    return {
+      success: true,
+      email: guardianEmail,
+      redirectTo,
+      directLink,
+      message: `Link seguro de acesso enviado com sucesso para ${guardianEmail}`
+    };
   }
 }
 

@@ -184,6 +184,9 @@ export const NovoAluno = () => {
         };
       }
 
+      // Envia a URL de origem atual do frontend para garantir o link de convite e definição de senha correto
+      payload.clientOrigin = window.location.origin;
+
       await fetchApi('/students', {
         method: 'POST',
         body: JSON.stringify(payload)

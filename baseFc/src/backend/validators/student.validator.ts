@@ -49,7 +49,8 @@ export const createStudentSchema = z.object({
     phone: z.string().min(8, 'Telefone de emergência').max(15),
     authorizedPickup: z.boolean().default(true),
     notes: z.string().max(200).optional().or(z.literal(''))
-  }).optional().nullable()
+  }).optional().nullable(),
+  clientOrigin: z.string().url().optional()
 });
 
 export const updateStudentSchema = z.object({

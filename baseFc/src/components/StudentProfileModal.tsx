@@ -3,7 +3,8 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { 
   X, User, ShieldCheck, Heart, CalendarCheck, CreditCard, 
-  Phone, AlertTriangle, CheckCircle2, XCircle, Clock, Mail
+  Phone, AlertTriangle, CheckCircle2, XCircle, Clock, Mail,
+  Send, Copy, Check
 } from 'lucide-react';
 import { maskCPF, maskPhone } from '../utils/masks.ts';
 
@@ -13,10 +14,13 @@ interface Props {
 }
 
 export const StudentProfileModal = ({ studentId, onClose }: Props) => {
-  const { token } = useAuth();
+  const { token, role } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dados' | 'responsaveis' | 'saude' | 'frequencia' | 'mensalidades'>('dados');
+  const [reinviteLoading, setReinviteLoading] = useState<string | null>(null);
+  const [reinviteMsg, setReinviteMsg] = useState<{ id: string; text: string; link?: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -32,6 +36,26 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
     };
     loadProfile();
   }, [studentId, token]);
+
+  const handleReinvite = async (guardianId: string, email: string) => {
+    try {
+      setReinviteLoading(guardianId);
+      setReinviteMsg(null);
+      const res = await fetchApi(`/students/${studentId}/guardians/${guardianId}/invite`, {
+        method: 'POST',
+        body: JSON.stringify({ clientOrigin: window.location.origin })
+      }, token);
+      setReinviteMsg({
+        id: guardianId,
+        text: res.message || `Link seguro enviado para ${email}!`,
+        link: res.directLink || undefined
+      });
+    } catch (err: any) {
+      alert(err.message || 'Falha ao reenviar link de acesso.');
+    } finally {
+      setReinviteLoading(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -137,37 +161,83 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                 <div className="text-center py-8 text-gray-500">Nenhum responsável cadastrado para este atleta.</div>
               ) : (
                 guardians.map((g: any) => (
-                  <div key={g.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-bold text-gray-900 text-base">{g.name}</div>
-                        {g.hasPortalAccess ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            Portal Ativo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
-                            Apenas Contato
-                          </span>
+                  <div key={g.id} className="space-y-2">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-bold text-gray-900 text-base">{g.name}</div>
+                          {g.hasPortalAccess ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              Portal Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                              Apenas Contato
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                          <div>CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
+                          {g.email ? (
+                            <div className="flex items-center text-gray-700 font-medium break-all">
+                              <Mail className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
+                              {g.email}
+                            </div>
+                          ) : (
+                            <div className="text-gray-400 italic">Sem e-mail para acesso ao portal</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:items-end gap-2 shrink-0">
+                        <a href={`tel:${g.phone}`} className="inline-flex items-center text-xs sm:text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
+                          <Phone className="w-4 h-4 mr-1.5" /> {g.phone ? maskPhone(g.phone) : 'Sem telefone'}
+                        </a>
+
+                        {role === 'GESTOR' && g.email && (
+                          <button
+                            type="button"
+                            disabled={reinviteLoading === g.id}
+                            onClick={() => handleReinvite(g.id, g.email)}
+                            className="inline-flex items-center gap-1.5 text-2xs font-bold text-emerald-800 bg-emerald-100/70 hover:bg-emerald-200/80 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            title="Envia e-mail e gera link seguro com a URL oficial de produção"
+                          >
+                            <Send className="w-3 h-3" />
+                            {reinviteLoading === g.id ? 'Enviando...' : 'Reenviar Link de Senha'}
+                          </button>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                        <div>CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
-                        {g.email ? (
-                          <div className="flex items-center text-gray-700 font-medium break-all">
-                            <Mail className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
-                            {g.email}
+                    </div>
+
+                    {reinviteMsg && reinviteMsg.id === g.id && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 animate-in fade-in space-y-1.5">
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{reinviteMsg.text}</span>
+                        </div>
+                        {reinviteMsg.link && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <input 
+                              type="text" 
+                              readOnly 
+                              value={reinviteMsg.link} 
+                              className="text-2xs bg-white border border-emerald-300 rounded px-2 py-1 w-full text-gray-700 select-all font-mono" 
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(reinviteMsg.link!);
+                                setCopied(true);
+                                setTimeout(() => setCopied(false), 2500);
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-2xs font-bold bg-emerald-700 text-white rounded hover:bg-emerald-800 shrink-0 cursor-pointer"
+                            >
+                              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                              {copied ? 'Copiado!' : 'Copiar'}
+                            </button>
                           </div>
-                        ) : (
-                          <div className="text-gray-400 italic">Sem e-mail para acesso ao portal</div>
                         )}
                       </div>
-                    </div>
-                    <div className="sm:text-right">
-                      <a href={`tel:${g.phone}`} className="inline-flex items-center text-xs sm:text-sm font-semibold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors">
-                        <Phone className="w-4 h-4 mr-1.5" /> {g.phone ? maskPhone(g.phone) : 'Sem telefone'}
-                      </a>
-                    </div>
+                    )}
                   </div>
                 ))
               )}
