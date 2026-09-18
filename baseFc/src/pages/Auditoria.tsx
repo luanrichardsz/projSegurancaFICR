@@ -111,7 +111,7 @@ export const Auditoria = () => {
           <div>
             <h4 className="text-xs font-bold uppercase text-blue-900 tracking-wider">Confidencialidade</h4>
             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-              Autenticação JWT, RBAC rígido (GESTOR, PROFESSOR, RESPONSAVEL) e isolamento IDOR multitenant por escolinha.
+              Autenticação JWT, RBAC rígido (GESTOR, RESPONSAVEL) e isolamento IDOR multitenant por escolinha.
             </p>
           </div>
         </div>

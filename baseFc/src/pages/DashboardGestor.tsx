@@ -41,7 +41,7 @@ export const DashboardGestor = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#112F20] to-[#1E4D36] p-8 rounded-3xl text-white shadow-xl">
         <div>
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 mb-3">
-            <ShieldCheck className="w-3.5 h-3.5" /> Segurança FICR • Tríade CID
+            <ShieldCheck className="w-3.5 h-3.5" /> Gestão de Time • Tríade CID
           </span>
           <h1 className="text-3xl font-black tracking-tight">Painel do Gestor</h1>
           <p className="text-emerald-100/80 text-sm mt-1 max-w-xl">

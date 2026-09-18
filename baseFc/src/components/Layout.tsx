@@ -45,7 +45,7 @@ export const Layout = () => {
               </div>
               <div>
                 <h1 className="text-xl font-black tracking-wider text-white">BASE FC</h1>
-                <p className="text-2xs text-emerald-400 font-semibold tracking-wider uppercase">Segurança FICR</p>
+                  <p className="text-2xs text-emerald-400 font-semibold tracking-wider uppercase">Gestão de Time</p>
               </div>
             </div>
           </div>
