@@ -20,6 +20,9 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
+  // Habilitar trust proxy para ambientes atrás de proxy reverso (Render, Cloudflare, Vercel)
+  app.set('trust proxy', 1);
+
   // Segurança (Tríade CID)
   app.use(helmet({
     contentSecurityPolicy: false // Necessário no ambiente de dev do Vite e SPA
@@ -32,14 +35,17 @@ async function startServer() {
 
   app.use(cors({
     origin: allowedOrigins,
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'school-id']
   }));
   app.use(bodyParser.json());
 
   // Rate Limiting para prevenir DDoS/Brute Force (Disponibilidade)
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // limite de 100 requisições por IP
+    max: 500, // limite de 500 requisições por IP por janela de 15 minutos
+    skip: (req) => req.method === 'OPTIONS', // não limitar preflights de CORS
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Muitas requisições deste IP, tente novamente mais tarde.' }
@@ -69,10 +75,24 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    const indexPath = path.join(distPath, 'index.html');
+    const fs = await import('fs');
+
+    if (fs.existsSync(indexPath)) {
+      app.use(express.static(distPath));
+      app.get('*all', (req, res) => {
+        res.sendFile(indexPath);
+      });
+    } else {
+      app.get('/', (req, res) => {
+        res.json({
+          service: 'Base FC API',
+          status: 'online',
+          health: '/api/health',
+          timestamp: new Date()
+        });
+      });
+    }
   }
 
   app.listen(Number(PORT), '0.0.0.0', () => {

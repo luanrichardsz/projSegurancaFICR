@@ -56,7 +56,8 @@ export class StudentService {
             inviteStatus = 'EXISTS';
           } else {
             // Convidar novo usuário via Supabase Auth Admin
-            const appUrl = process.env.APP_URL || process.env.VITE_APP_URL || 'http://localhost:5173';
+            const rawAppUrl = process.env.APP_URL || process.env.FRONTEND_URL || process.env.VITE_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+            const appUrl = rawAppUrl.replace(/\/+$/, '');
             const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
               cleanGuardianEmail,
               {
