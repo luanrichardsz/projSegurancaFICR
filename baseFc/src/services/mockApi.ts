@@ -852,9 +852,37 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       }
     });
 
+    if (createdList.length === 0) {
+      return {
+        message: `Todos os ${activeStudents.length} atletas ativos já possuem cobrança gerada para a competência ${competence}. Selecione o próximo mês (ex: 10/2026) para emitir um novo lote.`,
+        count: 0,
+        created: []
+      };
+    }
+
+    // Auditoria
+    store.auditLogs.unshift({
+      id: `demo-log-${Date.now()}`,
+      school_id: 'demo-school-001',
+      user_id: 'demo-user-gestor',
+      user_email: 'carlos.diretor@basefc.com',
+      user_role: 'GESTOR',
+      action: 'GERAR_MENSALIDADES_LOTE',
+      resource: `Lote ${competence} (${createdList.length} mensalidades)`,
+      details: {
+        competence,
+        dueDate,
+        amount,
+        createdCount: createdList.length,
+        totalActive: activeStudents.length
+      },
+      timestamp: new Date().toISOString(),
+      ip_address: '127.0.0.1'
+    });
+
     saveDataStore(store);
     return {
-      message: `${createdList.length} mensalidades geradas em lote no ambiente de demonstração.`,
+      message: `${createdList.length} mensalidades geradas com sucesso para a competência ${competence}.`,
       count: createdList.length,
       created: createdList
     };
@@ -934,12 +962,20 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
       const studentId = body.studentId || body.student_id;
       const student = store.students.find(s => s.id === studentId);
+      const competence = body.competence || (body.reference_month && body.reference_year ? `${String(body.reference_month).padStart(2, '0')}/${body.reference_year}` : '09/2026');
+
+      // Validar duplicidade igual ao backend real
+      const exists = store.payments.some(p => p.student_id === studentId && p.competence === competence);
+      if (exists) {
+        throw new Error(`Já existe uma cobrança para o atleta ${student?.name || 'selecionado'} referente à competência ${competence}.`);
+      }
+
       const newPay: MockPayment = {
         id: `demo-pay-${Date.now()}`,
         student_id: studentId,
         amount: Number(body.amount) || 195.00,
         due_date: body.dueDate || body.due_date || new Date().toISOString().slice(0, 10),
-        competence: body.competence || '09/2026',
+        competence,
         status: 'PENDENTE',
         students: student ? {
           id: student.id,
@@ -950,6 +986,21 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         } : undefined
       };
       store.payments.push(newPay);
+
+      // Auditoria
+      store.auditLogs.unshift({
+        id: `demo-log-${Date.now()}`,
+        school_id: 'demo-school-001',
+        user_id: 'demo-user-gestor',
+        user_email: 'carlos.diretor@basefc.com',
+        user_role: 'GESTOR',
+        action: 'CRIAR_MENSALIDADE_AVULSA',
+        resource: `Mensalidade ${competence} - ${student?.name || 'Aluno'} (R$ ${newPay.amount.toFixed(2)})`,
+        details: { paymentId: newPay.id, studentId, amount: newPay.amount, competence, dueDate: newPay.due_date },
+        timestamp: new Date().toISOString(),
+        ip_address: '127.0.0.1'
+      });
+
       saveDataStore(store);
       return newPay;
     }

@@ -56,18 +56,24 @@ export const Mensalidades = () => {
   const [payingPayment, setPayingPayment] = useState<Payment | null>(null);
 
   // Batch Form
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const nextMonthDate = new Date();
+  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+  const defaultBatchMonth = nextMonthDate.getMonth() + 1;
+  const defaultBatchYear = nextMonthDate.getFullYear();
+
   const [batchForm, setBatchForm] = useState({
-    reference_month: currentMonth,
-    reference_year: currentYear,
-    due_date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10`,
+    reference_month: defaultBatchMonth,
+    reference_year: defaultBatchYear,
+    due_date: `${defaultBatchYear}-${String(defaultBatchMonth).padStart(2, '0')}-10`,
     default_amount: 150.00
   });
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResult, setBatchResult] = useState<string | null>(null);
+  const [batchError, setBatchError] = useState<string | null>(null);
 
   // Single Form
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
   const [singleForm, setSingleForm] = useState({
     student_id: '',
     amount: 150.00,
@@ -115,6 +121,7 @@ export const Mensalidades = () => {
     try {
       setBatchLoading(true);
       setBatchResult(null);
+      setBatchError(null);
       const comp = `${String(batchForm.reference_month).padStart(2, '0')}/${batchForm.reference_year}`;
       const res = await fetchApi('/payments/batch', {
         method: 'POST',
@@ -129,14 +136,18 @@ export const Mensalidades = () => {
         })
       }, token);
 
-      setBatchResult(res.message || `Sucesso! ${res.count || 0} mensalidades geradas.`);
-      await loadData();
-      setTimeout(() => {
-        setShowBatchModal(false);
-        setBatchResult(null);
-      }, 1500);
+      if (res.count === 0) {
+        setBatchError(res.message || `Todos os alunos ativos já possuem mensalidade para a competência ${comp}.`);
+      } else {
+        setBatchResult(res.message || `Sucesso! ${res.count || 0} mensalidades geradas.`);
+        await loadData();
+        setTimeout(() => {
+          setShowBatchModal(false);
+          setBatchResult(null);
+        }, 1800);
+      }
     } catch (err: any) {
-      alert(`Erro ao gerar lote: ${err.message}`);
+      setBatchError(err.message || 'Erro ao gerar lote');
     } finally {
       setBatchLoading(false);
     }
@@ -730,12 +741,27 @@ export const Mensalidades = () => {
                 </div>
               )}
 
+              {batchError && (
+                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>{batchError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Mês de Referência *</label>
                   <select
                     value={batchForm.reference_month}
-                    onChange={e => setBatchForm(prev => ({ ...prev, reference_month: Number(e.target.value) }))}
+                    onChange={e => {
+                      const m = Number(e.target.value);
+                      setBatchForm(prev => ({
+                        ...prev,
+                        reference_month: m,
+                        due_date: `${prev.reference_year}-${String(m).padStart(2, '0')}-10`
+                      }));
+                      setBatchError(null);
+                    }}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
@@ -751,7 +777,15 @@ export const Mensalidades = () => {
                     min={2020}
                     max={2050}
                     value={batchForm.reference_year}
-                    onChange={e => setBatchForm(prev => ({ ...prev, reference_year: Number(e.target.value) }))}
+                    onChange={e => {
+                      const y = Number(e.target.value);
+                      setBatchForm(prev => ({
+                        ...prev,
+                        reference_year: y,
+                        due_date: `${y}-${String(prev.reference_month).padStart(2, '0')}-10`
+                      }));
+                      setBatchError(null);
+                    }}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
                   />
                 </div>
