@@ -735,12 +735,21 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
     const classId = attClassMatch[1];
     const targetDate = searchParams.get('date') || new Date().toISOString().slice(0, 10);
     const targetClass = store.classes.find(c => c.id === classId);
-    if (!targetClass) return [];
+    if (!targetClass) {
+      return {
+        classId,
+        date: targetDate,
+        totalStudents: 0,
+        hasRecorded: false,
+        summary: { total: 0, presentes: 0, ausentes: 0, justificados: 0 },
+        students: []
+      };
+    }
 
     const existingForDate = store.attendance.filter(a => a.class_id === classId && a.date === targetDate);
     const attMap = new Map(existingForDate.map(a => [a.student_id, a.status]));
 
-    return store.students
+    const list = store.students
       .filter(s => targetClass.studentIds.includes(s.id))
       .map(s => ({
         id: s.id,
@@ -750,6 +759,20 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         category: s.category,
         status: attMap.get(s.id) || 'PRESENTE'
       }));
+
+    return {
+      classId,
+      date: targetDate,
+      totalStudents: list.length,
+      hasRecorded: existingForDate.length > 0,
+      summary: {
+        total: list.length,
+        presentes: list.filter(s => s.status === 'PRESENTE').length,
+        ausentes: list.filter(s => s.status === 'AUSENTE').length,
+        justificados: list.filter(s => s.status === 'JUSTIFICADO').length
+      },
+      students: list
+    };
   }
 
   // POST /attendance

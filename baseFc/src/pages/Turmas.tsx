@@ -299,7 +299,7 @@ export const Turmas = () => {
     try {
       setAttendanceLoading(true);
       const data = await fetchApi(`/attendance/class/${turmaId}?date=${dateStr}`, {}, token);
-      const studentsList = data?.students || [];
+      const studentsList = Array.isArray(data) ? data : (data?.students || []);
       setClassStudents(studentsList);
 
       const recordsMap: Record<string, 'PRESENTE' | 'AUSENTE' | 'JUSTIFICADO'> = {};
