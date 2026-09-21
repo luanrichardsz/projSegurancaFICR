@@ -136,38 +136,38 @@ export const Auditoria = () => {
       </div>
 
       {/* Tríade CID Educational Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-4">
-          <div className="p-3 bg-blue-50 text-blue-700 rounded-xl shrink-0">
-            <Lock className="w-6 h-6" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 bg-blue-50 text-blue-700 rounded-xl shrink-0">
+            <Lock className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h4 className="text-xs font-bold uppercase text-blue-900 tracking-wider">Confidencialidade</h4>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-bold uppercase text-blue-900 tracking-wider break-words">Confidencialidade</h4>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed break-words">
               Autenticação JWT, RBAC rígido (GESTOR, RESPONSAVEL) e isolamento IDOR multitenant por escolinha.
             </p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-4">
-          <div className="p-3 bg-emerald-50 text-emerald-700 rounded-xl shrink-0">
-            <ShieldCheck className="w-6 h-6" />
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 bg-emerald-50 text-emerald-700 rounded-xl shrink-0">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h4 className="text-xs font-bold uppercase text-emerald-900 tracking-wider">Integridade & Não-Repúdio</h4>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-bold uppercase text-emerald-900 tracking-wider break-words">Integridade & Não-Repúdio</h4>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed break-words">
               Toda alteração cadastral, baixa de mensalidade e chamada gera log rastreável de operador, timestamp e estado anterior.
             </p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-4">
-          <div className="p-3 bg-purple-50 text-purple-700 rounded-xl shrink-0">
-            <Database className="w-6 h-6" />
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-start gap-3 sm:gap-4">
+          <div className="p-2.5 sm:p-3 bg-purple-50 text-purple-700 rounded-xl shrink-0">
+            <Database className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <h4 className="text-xs font-bold uppercase text-purple-900 tracking-wider">Disponibilidade</h4>
-            <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-bold uppercase text-purple-900 tracking-wider break-words">Disponibilidade</h4>
+            <p className="text-xs text-gray-600 mt-1 leading-relaxed break-words">
               Validações robustas com Zod no backend, bloqueio de sobrelotação de turmas e sanitização de falhas sem vazamento.
             </p>
           </div>
@@ -176,14 +176,14 @@ export const Auditoria = () => {
 
       {/* Alerta de Erro */}
       {error && (
-        <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="bg-rose-50 text-rose-700 p-4 rounded-2xl border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
             <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
-            <span className="text-xs font-medium">{error}</span>
+            <span className="text-xs font-medium break-words">{error}</span>
           </div>
           <button
             onClick={loadLogs}
-            className="text-xs font-bold bg-rose-600 text-white px-3 py-1.5 rounded-lg hover:bg-rose-700 transition-colors cursor-pointer"
+            className="text-xs font-bold bg-rose-600 text-white px-3 py-1.5 rounded-lg hover:bg-rose-700 transition-colors cursor-pointer self-end sm:self-auto"
           >
             Tentar Novamente
           </button>
@@ -192,8 +192,8 @@ export const Auditoria = () => {
 
       {/* Table & Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-3 bg-gray-50/70 items-center justify-between">
-          <div className="relative flex-1 w-full md:max-w-md">
+        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 bg-gray-50/70 items-stretch sm:items-center justify-between">
+          <div className="relative flex-1 w-full sm:max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
@@ -205,15 +205,15 @@ export const Auditoria = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium mr-1">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium shrink-0">
               <Filter className="w-3.5 h-3.5" />
               Ação:
             </div>
             <select
               value={actionFilter}
               onChange={e => setActionFilter(e.target.value)}
-              className="text-xs bg-white border border-gray-200 py-2 px-3 rounded-lg font-medium text-gray-700 focus:outline-none focus:border-emerald-600"
+              className="text-xs bg-white border border-gray-200 py-2.5 px-3 rounded-xl font-medium text-gray-700 focus:outline-none focus:border-emerald-600 flex-1 sm:flex-none"
             >
               <option value="TODAS">Todas as Ações ({uniqueActions.length})</option>
               {uniqueActions.map(act => (
@@ -247,43 +247,96 @@ export const Auditoria = () => {
 
                 return (
                   <div key={log.id} className="p-4 space-y-3 hover:bg-emerald-50/20 transition-colors">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
+                    {/* Top Row: Operador e Badge da Ação */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-xs font-bold shrink-0">
                           <User className="w-4 h-4" />
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-bold text-gray-900 truncate">{operatorEmail}</p>
-                          <p className="text-3xs text-gray-400 uppercase font-semibold">{operatorRole} • {formatDate(logDate)}</p>
+                          <p className="text-3xs text-gray-400 font-semibold uppercase tracking-wider truncate">
+                            {operatorRole} • {formatDate(logDate)}
+                          </p>
                         </div>
                       </div>
 
-                      <span className={`shrink-0 inline-flex items-center px-2 py-0.5 text-3xs font-bold rounded-md border ${getActionBadge(log.action)}`}>
-                        {log.action}
-                      </span>
+                      <div className="self-start sm:self-auto shrink-0">
+                        <span className={`inline-flex items-center px-2 py-0.5 text-3xs font-bold rounded-md border tracking-wider break-all ${getActionBadge(log.action)}`}>
+                          {log.action}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="bg-gray-50 p-2.5 rounded-xl space-y-1 text-2xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400 font-semibold">Recurso:</span>
-                        <span className="font-mono text-gray-800 font-bold">{log.resource}</span>
+                    {/* Bloco de Recurso e Detalhes */}
+                    <div className="bg-gray-50 p-3 rounded-xl space-y-2 text-2xs">
+                      <div>
+                        <span className="text-3xs text-gray-400 font-bold uppercase tracking-wider block">Recurso Afetado</span>
+                        <span className="font-mono text-xs text-gray-800 font-bold break-words block mt-0.5 leading-snug">
+                          {log.resource}
+                        </span>
                       </div>
+
                       {log.details && (
-                        <div className="text-gray-600 truncate pt-1 border-t border-gray-200/60">
-                          {log.details.name ? `Nome: ${log.details.name} ` : ''}
-                          {log.details.student_name ? `Aluno: ${log.details.student_name} ` : ''}
-                          {log.details.category ? `Cat: ${log.details.category} ` : ''}
-                          {log.details.amount ? `R$ ${log.details.amount} ` : ''}
-                          {log.details.paymentMethod || log.details.payment_method ? `Método: ${log.details.paymentMethod || log.details.payment_method} ` : ''}
-                          {log.details.status ? `Status: ${log.details.status} ` : ''}
-                          {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.status ? 'Payload registrado' : ''}
+                        <div className="pt-2 border-t border-gray-200/60">
+                          <span className="text-3xs text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Detalhes da Transação</span>
+                          <div className="flex flex-wrap gap-1.5 text-2xs text-gray-700">
+                            {log.details.name && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Nome: <strong className="text-gray-900">{log.details.name}</strong>
+                              </span>
+                            )}
+                            {log.details.student_name && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Aluno: <strong className="text-gray-900">{log.details.student_name}</strong>
+                              </span>
+                            )}
+                            {log.details.category && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Cat: <strong className="text-gray-900">{log.details.category}</strong>
+                              </span>
+                            )}
+                            {log.details.amount && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Valor: <strong className="text-emerald-700">R$ {log.details.amount}</strong>
+                              </span>
+                            )}
+                            {(log.details.paymentMethod || log.details.payment_method) && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Método: <strong className="text-gray-900">{log.details.paymentMethod || log.details.payment_method}</strong>
+                              </span>
+                            )}
+                            {log.details.status && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Status: <strong className="text-gray-900">{log.details.status}</strong>
+                              </span>
+                            )}
+                            {log.details.totalIssued && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Títulos: <strong className="text-gray-900">{log.details.totalIssued}</strong>
+                              </span>
+                            )}
+                            {log.details.presences !== undefined && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Presenças: <strong className="text-emerald-700">{log.details.presences}</strong>
+                              </span>
+                            )}
+                            {log.details.absences !== undefined && (
+                              <span className="bg-white px-2 py-0.5 rounded-md border border-gray-200/80 font-medium">
+                                Faltas: <strong className="text-rose-700">{log.details.absences}</strong>
+                              </span>
+                            )}
+                            {!log.details.name && !log.details.student_name && !log.details.amount && !log.details.status && !log.details.category && !log.details.totalIssued && log.details.presences === undefined && (
+                              <span className="text-gray-500 italic">Payload registrado</span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
 
                     <button
                       onClick={() => setSelectedLog(log)}
-                      className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-900 font-bold px-3 py-2 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-200/60 transition-colors cursor-pointer"
+                      className="w-full min-h-[40px] inline-flex items-center justify-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-900 font-bold px-3 py-2 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-200/60 transition-colors cursor-pointer active:scale-98"
                     >
                       <Eye className="w-3.5 h-3.5" /> Inspecionar Evidência
                     </button>

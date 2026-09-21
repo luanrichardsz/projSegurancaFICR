@@ -13,6 +13,44 @@ interface Props {
   onSaved: () => void;
 }
 
+const normalizeCategory = (cat?: string): string => {
+  if (!cat) return 'Sub-11';
+  const c = cat.toUpperCase().replace('_', '-');
+  if (c.includes('7')) return 'Sub-7';
+  if (c.includes('9')) return 'Sub-9';
+  if (c.includes('11')) return 'Sub-11';
+  if (c.includes('13')) return 'Sub-13';
+  if (c.includes('15')) return 'Sub-15';
+  if (c.includes('17')) return 'Sub-17';
+  if (c.includes('FEM')) return 'Feminino Base';
+  return cat;
+};
+
+const normalizeDominantFoot = (foot?: string): string => {
+  if (!foot) return 'DIREITO';
+  const f = foot.toUpperCase();
+  if (f === 'DESTRO' || f === 'DIREITO') return 'DIREITO';
+  if (f === 'CANHOTO' || f === 'ESQUERDO') return 'ESQUERDO';
+  if (f === 'AMBIDESTRO') return 'AMBIDESTRO';
+  return 'DIREITO';
+};
+
+const normalizePosition = (pos?: string): string => {
+  if (!pos) return 'Atacante';
+  const p = pos.toLowerCase();
+  if (p.includes('centroavante')) return 'Centroavante';
+  if (p.includes('ponta direita')) return 'Ponta Direita';
+  if (p.includes('ponta esquerda')) return 'Ponta Esquerda';
+  if (p.includes('meio') || p.includes('meia')) return 'Meio-campo';
+  if (p.includes('volante')) return 'Volante';
+  if (p.includes('lateral dir')) return 'Lateral Direito';
+  if (p.includes('lateral esq')) return 'Lateral Esquerdo';
+  if (p.includes('zagueiro')) return 'Zagueiro';
+  if (p.includes('goleiro')) return 'Goleiro';
+  if (p.includes('atacante')) return 'Atacante';
+  return pos;
+};
+
 export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -53,10 +91,10 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
       try {
         setLoading(true);
         const data = await fetchApi(`/students/${studentId}/profile`, {}, token);
-        if (data && data.student) {
-          const s = data.student;
-          const g = data.guardians?.[0] || null;
-          const e = data.emergencyContacts?.[0] || null;
+        if (data && (data.student || data.name || data.id)) {
+          const s = data.student || data;
+          const g = data.guardians?.[0] || s.guardian || null;
+          const e = data.emergencyContacts?.[0] || s.emergencyContact || null;
 
           setFormData({
             name: s.name || '',
@@ -64,9 +102,9 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
             dob: s.dob ? s.dob.slice(0, 10) : '',
             phone: s.phone ? maskPhone(s.phone) : '',
             address: s.address || '',
-            category: s.category || 'Sub-11',
-            position: s.position || 'Atacante',
-            dominantFoot: s.dominantFoot || s.dominant_foot || 'DIREITO',
+            category: normalizeCategory(s.category),
+            position: normalizePosition(s.position),
+            dominantFoot: normalizeDominantFoot(s.dominantFoot || s.dominant_foot),
             shirtNumber: s.shirtNumber || s.shirt_number || 10,
             status: s.status || 'ATIVO',
             allergies: s.allergies || '',
@@ -80,7 +118,7 @@ export const EditStudentModal = ({ studentId, onClose, onSaved }: Props) => {
             emergencyName: e?.name || '',
             emergencyPhone: e?.phone ? maskPhone(e.phone) : '',
             emergencyRelationship: e?.relationship || 'Familiar',
-            emergencyPickup: e?.authorized_pickup ?? true,
+            emergencyPickup: e?.authorized_pickup ?? (e?.authorizedPickup ?? true),
             emergencyNotes: e?.notes || ''
           });
         }

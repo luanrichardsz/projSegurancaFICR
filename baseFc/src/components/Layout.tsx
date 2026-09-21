@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { DemoBanner } from './DemoBanner.tsx';
 import { 
   LogOut, LayoutDashboard, Users, UserPlus, BookOpen, 
   CreditCard, UserCheck, ShieldCheck, Menu, X, Shield 
@@ -125,9 +126,11 @@ export const Layout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f4f7f6] flex flex-col md:flex-row w-full max-w-full overflow-x-hidden">
-      {/* Top Mobile Header (com Safe Area para Dynamic Island / Notch) */}
-      <header className="sticky top-0 z-30 bg-[#112F20] border-b border-[#1E4D36] text-white px-4 py-3 flex md:hidden items-center justify-between shadow-md pt-[max(env(safe-area-inset-top),0.75rem)] pr-[max(env(safe-area-inset-right),1rem)] pl-[max(env(safe-area-inset-left),1rem)]">
+    <div className="min-h-screen md:h-screen bg-[#f4f7f6] flex flex-col w-full max-w-full overflow-x-hidden">
+      <DemoBanner />
+      <div className="flex-1 flex flex-col md:flex-row w-full max-w-full min-h-0">
+        {/* Top Mobile Header (com Safe Area para Dynamic Island / Notch) */}
+        <header className="sticky top-0 z-30 bg-[#112F20] border-b border-[#1E4D36] text-white px-4 py-3 flex md:hidden items-center justify-between shadow-md pt-[max(env(safe-area-inset-top),0.75rem)] pr-[max(env(safe-area-inset-right),1rem)] pl-[max(env(safe-area-inset-left),1rem)]">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-emerald-500 text-[#112F20] font-black flex items-center justify-center text-base shadow-sm">
             B
@@ -171,9 +174,10 @@ export const Layout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden max-h-[calc(100vh-57px)] md:max-h-screen min-w-0 w-full max-w-full">
+      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 w-full max-w-full">
         <Outlet />
       </main>
     </div>
+  </div>
   );
 };

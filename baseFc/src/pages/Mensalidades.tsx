@@ -56,18 +56,24 @@ export const Mensalidades = () => {
   const [payingPayment, setPayingPayment] = useState<Payment | null>(null);
 
   // Batch Form
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+  const nextMonthDate = new Date();
+  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+  const defaultBatchMonth = nextMonthDate.getMonth() + 1;
+  const defaultBatchYear = nextMonthDate.getFullYear();
+
   const [batchForm, setBatchForm] = useState({
-    reference_month: currentMonth,
-    reference_year: currentYear,
-    due_date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-10`,
+    reference_month: defaultBatchMonth,
+    reference_year: defaultBatchYear,
+    due_date: `${defaultBatchYear}-${String(defaultBatchMonth).padStart(2, '0')}-10`,
     default_amount: 150.00
   });
   const [batchLoading, setBatchLoading] = useState(false);
   const [batchResult, setBatchResult] = useState<string | null>(null);
+  const [batchError, setBatchError] = useState<string | null>(null);
 
   // Single Form
+  const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
   const [singleForm, setSingleForm] = useState({
     student_id: '',
     amount: 150.00,
@@ -115,6 +121,7 @@ export const Mensalidades = () => {
     try {
       setBatchLoading(true);
       setBatchResult(null);
+      setBatchError(null);
       const comp = `${String(batchForm.reference_month).padStart(2, '0')}/${batchForm.reference_year}`;
       const res = await fetchApi('/payments/batch', {
         method: 'POST',
@@ -129,14 +136,18 @@ export const Mensalidades = () => {
         })
       }, token);
 
-      setBatchResult(res.message || `Sucesso! ${res.count || 0} mensalidades geradas.`);
-      await loadData();
-      setTimeout(() => {
-        setShowBatchModal(false);
-        setBatchResult(null);
-      }, 1500);
+      if (res.count === 0) {
+        setBatchError(res.message || `Todos os alunos ativos já possuem mensalidade para a competência ${comp}.`);
+      } else {
+        setBatchResult(res.message || `Sucesso! ${res.count || 0} mensalidades geradas.`);
+        await loadData();
+        setTimeout(() => {
+          setShowBatchModal(false);
+          setBatchResult(null);
+        }, 1800);
+      }
     } catch (err: any) {
-      alert(`Erro ao gerar lote: ${err.message}`);
+      setBatchError(err.message || 'Erro ao gerar lote');
     } finally {
       setBatchLoading(false);
     }
@@ -240,7 +251,11 @@ export const Mensalidades = () => {
         studentCpf.includes(searchTerm);
 
       const matchesStatus = statusFilter === 'TODOS' || p.status === statusFilter;
-      const matchesMonth = monthFilter === 'TODOS' || String(p.reference_month) === monthFilter;
+      const pMonth = p.reference_month ?? (
+        p.competence ? parseInt(p.competence.split('/')[0], 10) :
+        (p.due_date ? parseInt(p.due_date.slice(5, 7), 10) : null)
+      );
+      const matchesMonth = monthFilter === 'TODOS' || String(pMonth) === monthFilter;
 
       return matchesSearch && matchesStatus && matchesMonth;
     });
@@ -301,45 +316,45 @@ export const Mensalidades = () => {
 
       {/* Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Total Recebido</p>
-            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Total Recebido</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1 truncate">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalReceived)}
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">Mensalidades liquidadas</p>
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">Mensalidades liquidadas</p>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0">
             <CheckCircle2 className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Em Aberto</p>
-            <p className="text-xl sm:text-2xl font-black text-blue-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Em Aberto</p>
+            <p className="text-xl sm:text-2xl font-black text-blue-600 mt-1 truncate">
               {stats.pendingCount} títulos
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">
               Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.pendingAmount)}
             </p>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
             <Clock className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Atrasadas</p>
-            <p className="text-xl sm:text-2xl font-black text-red-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Atrasadas</p>
+            <p className="text-xl sm:text-2xl font-black text-red-600 mt-1 truncate">
               {stats.overdueCount} títulos
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">
               Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.overdueAmount)}
             </p>
           </div>
-          <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+          <div className="p-3 bg-red-50 text-red-600 rounded-xl shrink-0">
             <AlertTriangle className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
@@ -424,7 +439,7 @@ export const Mensalidades = () => {
               {filteredPayments.map(p => (
                 <div key={p.id} className="p-4 space-y-3 hover:bg-emerald-50/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="font-bold text-gray-900 text-sm flex items-center gap-1.5 truncate">
                         <span>{p.students?.name || p.studentName || 'Atleta'}</span>
                         {(p.students?.shirt_number || p.students?.shirtNumber || p.shirt_number || p.shirtNumber) && (
@@ -730,12 +745,27 @@ export const Mensalidades = () => {
                 </div>
               )}
 
+              {batchError && (
+                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
+                  <span>{batchError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">Mês de Referência *</label>
                   <select
                     value={batchForm.reference_month}
-                    onChange={e => setBatchForm(prev => ({ ...prev, reference_month: Number(e.target.value) }))}
+                    onChange={e => {
+                      const m = Number(e.target.value);
+                      setBatchForm(prev => ({
+                        ...prev,
+                        reference_month: m,
+                        due_date: `${prev.reference_year}-${String(m).padStart(2, '0')}-10`
+                      }));
+                      setBatchError(null);
+                    }}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
@@ -751,7 +781,15 @@ export const Mensalidades = () => {
                     min={2020}
                     max={2050}
                     value={batchForm.reference_year}
-                    onChange={e => setBatchForm(prev => ({ ...prev, reference_year: Number(e.target.value) }))}
+                    onChange={e => {
+                      const y = Number(e.target.value);
+                      setBatchForm(prev => ({
+                        ...prev,
+                        reference_year: y,
+                        due_date: `${y}-${String(prev.reference_month).padStart(2, '0')}-10`
+                      }));
+                      setBatchError(null);
+                    }}
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
                   />
                 </div>
