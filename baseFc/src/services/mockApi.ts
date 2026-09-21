@@ -401,7 +401,18 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       return list.map(s => {
         const enrolledClasses = store.classes
           .filter(c => c.studentIds.includes(s.id))
-          .map(c => ({ id: c.id, name: c.name, category: c.category }));
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            category: c.category,
+            days_of_week: c.days_of_week,
+            daysOfWeek: c.days_of_week,
+            start_time: c.start_time,
+            startTime: c.start_time,
+            end_time: c.end_time,
+            endTime: c.end_time,
+            location: c.location
+          }));
 
         return {
           ...s,
@@ -426,12 +437,12 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         phone: body.phone || null,
         address: body.address || null,
         allergies: body.allergies || null,
-        medical_restrictions: body.medicalRestrictions || null,
+        medical_restrictions: body.medicalRestrictions || body.medical_restrictions || null,
         medications: body.medications || null,
-        category: body.category || 'SUB_11',
-        position: body.position || 'Meio-Campo',
-        dominant_foot: body.dominantFoot || 'Destro',
-        shirt_number: Number(body.shirtNumber) || 10,
+        category: body.category || 'Sub-11',
+        position: body.position || 'Meio-campo',
+        dominant_foot: body.dominantFoot || body.dominant_foot || 'DIREITO',
+        shirt_number: Number(body.shirtNumber || body.shirt_number) || 10,
         status: 'ATIVO',
         enrolled_at: new Date().toISOString(),
         guardian: body.guardian,
@@ -441,8 +452,9 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       store.students.push(newStudent);
 
       // Enturmar se indicado
-      if (body.classId) {
-        const targetClass = store.classes.find(c => c.id === body.classId);
+      const classIdToEnroll = body.classId || body.class_id;
+      if (classIdToEnroll) {
+        const targetClass = store.classes.find(c => c.id === classIdToEnroll);
         if (targetClass && !targetClass.studentIds.includes(newId)) {
           targetClass.studentIds.push(newId);
         }
@@ -475,10 +487,30 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
   if (enrollMatch && method === 'POST') {
     const classId = enrollMatch[1];
     const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
-    const studentId = body.studentId;
+    const studentId = body.studentId || body.student_id;
     const targetClass = store.classes.find(c => c.id === classId);
-    if (targetClass && studentId && !targetClass.studentIds.includes(studentId)) {
+    if (!targetClass) throw new Error('Turma não encontrada');
+    if (!studentId) throw new Error('ID do atleta não informado para matrícula');
+
+    if (targetClass.studentIds.length >= targetClass.capacity) {
+      throw new Error(`Turma cheia: A turma atingiu a capacidade máxima de ${targetClass.capacity} atletas.`);
+    }
+
+    if (!targetClass.studentIds.includes(studentId)) {
       targetClass.studentIds.push(studentId);
+      const student = store.students.find(s => s.id === studentId);
+      store.auditLogs.unshift({
+        id: `demo-log-${Date.now()}`,
+        school_id: 'demo-school-001',
+        user_id: 'demo-user-gestor',
+        user_email: 'carlos.diretor@basefc.com',
+        user_role: currentRole,
+        action: 'MATRICULAR_ALUNO_TURMA',
+        resource: `Turma: ${targetClass.name}`,
+        details: { classId, studentId, studentName: student?.name || 'Aluno', newEnrolledCount: targetClass.studentIds.length },
+        timestamp: new Date().toISOString(),
+        ip_address: '127.0.0.1'
+      });
       saveDataStore(store);
     }
     return { message: 'Atleta matriculado com sucesso na turma' };
@@ -566,12 +598,12 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       Object.assign(targetClass, {
         name: body.name ?? targetClass.name,
         category: body.category ?? targetClass.category,
-        days_of_week: body.daysOfWeek ?? targetClass.days_of_week,
-        start_time: body.startTime ?? targetClass.start_time,
-        end_time: body.endTime ?? targetClass.end_time,
+        days_of_week: body.daysOfWeek ?? (body.days_of_week ?? targetClass.days_of_week),
+        start_time: body.startTime ?? (body.start_time ?? targetClass.start_time),
+        end_time: body.endTime ?? (body.end_time ?? targetClass.end_time),
         location: body.location ?? targetClass.location,
         capacity: Number(body.capacity) || targetClass.capacity,
-        teacher_id: body.teacherId ?? targetClass.teacher_id
+        teacher_id: body.teacherId ?? (body.teacher_id ?? targetClass.teacher_id)
       });
       if (targetClass.teacher_id) {
         const t = store.teachers.find(tch => tch.id === targetClass.teacher_id);
@@ -615,14 +647,14 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         id: `demo-cls-${Date.now()}`,
         school_id: 'demo-school-001',
         name: body.name || 'Nova Turma Demo',
-        category: body.category || 'SUB_11',
-        days_of_week: body.daysOfWeek || ['SEG', 'QUA'],
-        start_time: body.startTime || '08:00',
-        end_time: body.endTime || '09:30',
+        category: body.category || 'Sub-11',
+        days_of_week: body.daysOfWeek || body.days_of_week || ['SEG', 'QUA'],
+        start_time: body.startTime || body.start_time || '08:00',
+        end_time: body.endTime || body.end_time || '09:30',
         location: body.location || 'Campo 1',
         capacity: Number(body.capacity) || 20,
         status: 'ATIVO',
-        teacher_id: body.teacherId || null,
+        teacher_id: body.teacherId || body.teacher_id || null,
         studentIds: []
       };
       if (newClass.teacher_id) {
@@ -723,7 +755,9 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
   // POST /attendance
   if (pathname === '/attendance' && method === 'POST') {
     const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
-    const { classId, date, records } = body;
+    const classId = body.classId || body.class_id;
+    const date = body.date || body.session_date;
+    const records = body.records || body.attendees || [];
 
     if (Array.isArray(records)) {
       // Remove presenças existentes da mesma data e turma
@@ -733,7 +767,7 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         store.attendance.push({
           id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           class_id: classId,
-          student_id: rec.studentId,
+          student_id: rec.studentId || rec.student_id,
           date,
           status: rec.status,
           notes: rec.notes || null
@@ -766,8 +800,8 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
   if (pathname === '/payments/batch' && method === 'POST') {
     const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
     const competence = body.competence || '10/2026';
-    const amount = Number(body.amount) || 195.00;
-    const dueDate = body.dueDate || '2026-10-10';
+    const amount = Number(body.amount || body.default_amount) || 195.00;
+    const dueDate = body.dueDate || body.due_date || '2026-10-10';
 
     const activeStudents = store.students.filter(s => s.status === 'ATIVO');
     const createdList: MockPayment[] = [];
@@ -812,7 +846,7 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
     if (!payment) throw new Error('Cobrança não encontrada');
 
     payment.status = 'PAGO';
-    payment.payment_method = body.method || 'PIX';
+    payment.payment_method = body.paymentMethod || body.payment_method || body.method || 'PIX';
     payment.paid_at = new Date().toISOString();
 
     store.auditLogs.unshift({
@@ -845,7 +879,7 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
   if (pathname === '/payments') {
     if (method === 'GET') {
       const status = searchParams.get('status');
-      const studentId = searchParams.get('studentId');
+      const studentId = searchParams.get('studentId') || searchParams.get('student_id');
       const competence = searchParams.get('competence');
       const today = new Date().toISOString().slice(0, 10);
 
@@ -875,12 +909,13 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
 
     if (method === 'POST') {
       const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
-      const student = store.students.find(s => s.id === body.studentId);
+      const studentId = body.studentId || body.student_id;
+      const student = store.students.find(s => s.id === studentId);
       const newPay: MockPayment = {
         id: `demo-pay-${Date.now()}`,
-        student_id: body.studentId,
+        student_id: studentId,
         amount: Number(body.amount) || 195.00,
-        due_date: body.dueDate || new Date().toISOString().slice(0, 10),
+        due_date: body.dueDate || body.due_date || new Date().toISOString().slice(0, 10),
         competence: body.competence || '09/2026',
         status: 'PENDENTE',
         students: student ? {

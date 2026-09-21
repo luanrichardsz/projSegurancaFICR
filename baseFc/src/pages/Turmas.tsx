@@ -220,7 +220,10 @@ export const Turmas = () => {
 
       await fetchApi(`/classes/${selectedClassDetail.id}/enroll`, {
         method: 'POST',
-        body: JSON.stringify({ student_id: selectedStudentToEnroll })
+        body: JSON.stringify({ 
+          student_id: selectedStudentToEnroll,
+          studentId: selectedStudentToEnroll 
+        })
       }, token);
 
       await handleOpenClassDetail(selectedClassDetail);
