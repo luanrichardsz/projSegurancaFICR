@@ -496,9 +496,14 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       throw new Error(`Turma cheia: A turma atingiu a capacidade máxima de ${targetClass.capacity} atletas.`);
     }
 
+    const student = store.students.find(s => s.id === studentId);
+    if (!student) throw new Error('ID do atleta não encontrado para matrícula');
+    if (student.status === 'INATIVO') {
+      throw new Error(`O atleta ${student.name} está inativo e não pode ser matriculado em turmas.`);
+    }
+
     if (!targetClass.studentIds.includes(studentId)) {
       targetClass.studentIds.push(studentId);
-      const student = store.students.find(s => s.id === studentId);
       store.auditLogs.unshift({
         id: `demo-log-${Date.now()}`,
         school_id: 'demo-school-001',
@@ -595,6 +600,14 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
 
     if (method === 'PUT') {
       const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
+      const newTeacherId = body.teacherId !== undefined ? body.teacherId : body.teacher_id;
+      if (newTeacherId) {
+        const tch = store.teachers.find(x => x.id === newTeacherId);
+        if (tch && tch.status === 'INATIVO') {
+          throw new Error(`O professor ${tch.name} está inativo e não pode ser atribuído a uma turma.`);
+        }
+      }
+
       Object.assign(targetClass, {
         name: body.name ?? targetClass.name,
         category: body.category ?? targetClass.category,
@@ -603,11 +616,13 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         end_time: body.endTime ?? (body.end_time ?? targetClass.end_time),
         location: body.location ?? targetClass.location,
         capacity: Number(body.capacity) || targetClass.capacity,
-        teacher_id: body.teacherId ?? (body.teacher_id ?? targetClass.teacher_id)
+        teacher_id: newTeacherId ?? targetClass.teacher_id
       });
       if (targetClass.teacher_id) {
         const t = store.teachers.find(tch => tch.id === targetClass.teacher_id);
         targetClass.teachers = t ? { id: t.id, name: t.name } : undefined;
+      } else {
+        targetClass.teachers = undefined;
       }
       saveDataStore(store);
       return targetClass;
@@ -643,6 +658,14 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
 
     if (method === 'POST') {
       const body = typeof options.body === 'string' ? JSON.parse(options.body) : {};
+      const teacherId = body.teacherId || body.teacher_id || null;
+      if (teacherId) {
+        const tch = store.teachers.find(x => x.id === teacherId);
+        if (tch && tch.status === 'INATIVO') {
+          throw new Error(`O professor ${tch.name} está inativo e não pode ser atribuído a uma turma.`);
+        }
+      }
+
       const newClass: MockClass = {
         id: `demo-cls-${Date.now()}`,
         school_id: 'demo-school-001',
@@ -654,7 +677,7 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
         location: body.location || 'Campo 1',
         capacity: Number(body.capacity) || 20,
         status: 'ATIVO',
-        teacher_id: body.teacherId || body.teacher_id || null,
+        teacher_id: teacherId,
         studentIds: []
       };
       if (newClass.teacher_id) {

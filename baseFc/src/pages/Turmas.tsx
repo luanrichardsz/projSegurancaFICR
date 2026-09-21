@@ -91,8 +91,9 @@ export const Turmas = () => {
       ]);
       setClasses(classesData || []);
       setTeachers(teachersData || []);
-      if (teachersData && teachersData.length > 0 && !newClass.teacher_id) {
-        setNewClass(prev => ({ ...prev, teacher_id: teachersData[0].id }));
+      const activeTeachers = (teachersData || []).filter((t: any) => t.status === 'ATIVO');
+      if (activeTeachers.length > 0 && !newClass.teacher_id) {
+        setNewClass(prev => ({ ...prev, teacher_id: activeTeachers[0].id }));
       }
     } catch (err) {
       console.error('Erro ao carregar turmas e professores', err);
@@ -146,6 +147,14 @@ export const Turmas = () => {
       setSavingTeacher(true);
       setTeacherSuccessMsg('');
       setTeacherErrorMsg('');
+
+      if (detailTeacherId) {
+        const selectedTeacher = teachers.find(t => t.id === detailTeacherId);
+        if (selectedTeacher && selectedTeacher.status === 'INATIVO') {
+          setTeacherErrorMsg(`O professor ${selectedTeacher.name} está inativo e não pode ser vinculado a uma turma.`);
+          return;
+        }
+      }
 
       await fetchApi(`/classes/${selectedClassDetail.id}`, {
         method: 'PUT',
@@ -205,6 +214,11 @@ export const Turmas = () => {
 
     // Pré-validação de conflito de agenda no client
     const studentObj = availableStudents.find(s => s.id === selectedStudentToEnroll);
+    if (studentObj && studentObj.status === 'INATIVO') {
+      setEnrollError(`O atleta "${studentObj.name}" está inativo e não pode ser matriculado em turmas.`);
+      return;
+    }
+
     const conflict = studentObj ? getStudentScheduleConflict(studentObj) : null;
     if (conflict) {
       setEnrollError(
@@ -397,6 +411,14 @@ export const Turmas = () => {
       return;
     }
 
+    if (newClass.teacher_id) {
+      const selectedTeacher = teachers.find(t => t.id === newClass.teacher_id);
+      if (selectedTeacher && selectedTeacher.status === 'INATIVO') {
+        setCreateError(`O professor ${selectedTeacher.name} está inativo e não pode ser atribuído a uma turma.`);
+        return;
+      }
+    }
+
     try {
       setCreateLoading(true);
       setCreateError('');
@@ -420,10 +442,11 @@ export const Turmas = () => {
       }, token);
 
       setShowCreateModal(false);
+      const activeTeachers = teachers.filter(t => t.status === 'ATIVO');
       setNewClass({
         name: '',
         category: 'Sub-11',
-        teacher_id: teachers[0]?.id || '',
+        teacher_id: activeTeachers[0]?.id || '',
         days_of_week: ['SEG', 'QUA'],
         start_time: '14:00',
         end_time: '15:30',
@@ -793,11 +816,17 @@ export const Turmas = () => {
                           className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 font-medium text-gray-800 focus:outline-none focus:border-emerald-600 w-full sm:w-auto sm:min-w-[200px]"
                         >
                           <option value="">-- Sem Professor Atribuído --</option>
-                          {teachers.map(t => (
-                            <option key={t.id} value={t.id}>
-                              {t.name} {t.cref ? `(CREF: ${t.cref})` : ''}
-                            </option>
-                          ))}
+                          {teachers
+                            .filter(t => t.status === 'ATIVO' || t.id === detailTeacherId)
+                            .map(t => (
+                              <option 
+                                key={t.id} 
+                                value={t.id}
+                                disabled={t.status === 'INATIVO' && t.id !== detailTeacherId}
+                              >
+                                {t.name} {t.cref ? `(CREF: ${t.cref})` : ''} {t.status === 'INATIVO' ? '(Inativo)' : ''}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
@@ -1405,9 +1434,11 @@ export const Turmas = () => {
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-600"
                   >
                     <option value="">-- Selecionar Professor --</option>
-                    {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name} {t.cref ? `(CREF: ${t.cref})` : ''}</option>
-                    ))}
+                    {teachers
+                      .filter(t => t.status === 'ATIVO')
+                      .map(t => (
+                        <option key={t.id} value={t.id}>{t.name} {t.cref ? `(CREF: ${t.cref})` : ''}</option>
+                      ))}
                   </select>
                 </div>
               </div>

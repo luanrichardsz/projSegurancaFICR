@@ -350,6 +350,24 @@ export class ClassService {
     const effectiveEnd = updateRecord.end_time !== undefined ? updateRecord.end_time : existingClass.end_time;
 
     if (effectiveTeacherId) {
+      const { data: teacher, error: tErr } = await supabaseAdmin
+        .from('teachers')
+        .select('id, name, status, school_id')
+        .eq('id', effectiveTeacherId)
+        .single();
+
+      if (tErr || !teacher || teacher.school_id !== schoolId) {
+        const err: any = new Error('Professor não encontrado na instituição');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (teacher.status === 'INATIVO') {
+        const err: any = new Error(`O professor ${teacher.name} está inativo e não pode ser atribuído a uma turma.`);
+        err.statusCode = 400;
+        throw err;
+      }
+
       await this.checkTeacherScheduleConflict(
         schoolId,
         effectiveTeacherId,
@@ -454,6 +472,24 @@ export class ClassService {
 
     // Validar conflito de agenda do professor antes de criar a turma
     if (classRecord.teacher_id) {
+      const { data: teacher, error: tErr } = await supabaseAdmin
+        .from('teachers')
+        .select('id, name, status, school_id')
+        .eq('id', classRecord.teacher_id)
+        .single();
+
+      if (tErr || !teacher || teacher.school_id !== schoolId) {
+        const err: any = new Error('Professor não encontrado na instituição');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (teacher.status === 'INATIVO') {
+        const err: any = new Error(`O professor ${teacher.name} está inativo e não pode ser atribuído a uma turma.`);
+        err.statusCode = 400;
+        throw err;
+      }
+
       await this.checkTeacherScheduleConflict(
         schoolId,
         classRecord.teacher_id,
@@ -520,7 +556,26 @@ export class ClassService {
       throw err;
     }
 
-    // 2. Verificar se o aluno já está matriculado nesta turma
+    // 2. Validar se o aluno existe, pertence à escola e está ativo
+    const { data: student, error: sErr } = await supabaseAdmin
+      .from('students')
+      .select('id, name, status, school_id')
+      .eq('id', studentId)
+      .single();
+
+    if (sErr || !student || student.school_id !== schoolId) {
+      const err: any = new Error('Aluno não encontrado na instituição');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (student.status === 'INATIVO') {
+      const err: any = new Error(`O aluno ${student.name} está inativo e não pode ser matriculado em turmas.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 3. Verificar se o aluno já está matriculado nesta turma
     const { data: existing } = await supabaseAdmin
       .from('class_students')
       .select('*')
@@ -534,7 +589,7 @@ export class ClassService {
       throw err;
     }
 
-    // 3. Validar se há conflito de horário com outras turmas do aluno
+    // 4. Validar se há conflito de horário com outras turmas do aluno
     await this.checkStudentScheduleConflict(
       schoolId,
       studentId,
@@ -544,7 +599,7 @@ export class ClassService {
       targetClass.end_time
     );
 
-    // 4. Efetuar a matrícula
+    // 5. Efetuar a matrícula
     const { error: insertErr } = await supabaseAdmin
       .from('class_students')
       .insert([{
@@ -556,14 +611,7 @@ export class ClassService {
       throw new Error(`Falha ao matricular aluno: ${insertErr.message}`);
     }
 
-    // Buscar nome do aluno para o log de auditoria
-    const { data: student } = await supabaseAdmin
-      .from('students')
-      .select('name')
-      .eq('id', studentId)
-      .single();
-
-    // 4. Registrar na Trilha de Auditoria (Integridade - CID)
+    // 6. Registrar na Trilha de Auditoria (Integridade - CID)
     await supabaseAdmin.from('audit_logs').insert([{
       school_id: schoolId,
       user_id: userId,
