@@ -126,7 +126,7 @@ export const Layout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f4f7f6] flex flex-col w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen md:h-screen bg-[#f4f7f6] flex flex-col w-full max-w-full overflow-x-hidden">
       <DemoBanner />
       <div className="flex-1 flex flex-col md:flex-row w-full max-w-full min-h-0">
         {/* Top Mobile Header (com Safe Area para Dynamic Island / Notch) */}
@@ -174,7 +174,7 @@ export const Layout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden max-h-[calc(100vh-57px)] md:max-h-screen min-w-0 w-full max-w-full">
+      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden min-w-0 w-full max-w-full">
         <Outlet />
       </main>
     </div>

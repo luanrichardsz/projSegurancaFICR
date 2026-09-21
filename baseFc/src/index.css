@@ -1,6 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 0.9375rem;
+  --text-3xs: 0.625rem;
+  --text-3xs--line-height: 0.8125rem;
+}
+
 @layer utilities {
+  .text-2xs {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+  }
+  .text-3xs {
+    font-size: 0.625rem;
+    line-height: 0.8125rem;
+  }
   .no-scrollbar::-webkit-scrollbar,
   .scrollbar-none::-webkit-scrollbar {
     display: none;

@@ -301,45 +301,45 @@ export const Mensalidades = () => {
 
       {/* Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Total Recebido</p>
-            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Total Recebido</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1 truncate">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalReceived)}
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">Mensalidades liquidadas</p>
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">Mensalidades liquidadas</p>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0">
             <CheckCircle2 className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Em Aberto</p>
-            <p className="text-xl sm:text-2xl font-black text-blue-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Em Aberto</p>
+            <p className="text-xl sm:text-2xl font-black text-blue-600 mt-1 truncate">
               {stats.pendingCount} títulos
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">
               Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.pendingAmount)}
             </p>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
             <Clock className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider">Atrasadas</p>
-            <p className="text-xl sm:text-2xl font-black text-red-600 mt-1">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold uppercase text-gray-400 tracking-wider truncate">Atrasadas</p>
+            <p className="text-xl sm:text-2xl font-black text-red-600 mt-1 truncate">
               {stats.overdueCount} títulos
             </p>
-            <p className="text-2xs text-gray-400 mt-0.5">
+            <p className="text-2xs text-gray-400 mt-0.5 truncate">
               Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.overdueAmount)}
             </p>
           </div>
-          <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+          <div className="p-3 bg-red-50 text-red-600 rounded-xl shrink-0">
             <AlertTriangle className="w-5 sm:w-6 h-5 sm:h-6" />
           </div>
         </div>
@@ -424,7 +424,7 @@ export const Mensalidades = () => {
               {filteredPayments.map(p => (
                 <div key={p.id} className="p-4 space-y-3 hover:bg-emerald-50/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="font-bold text-gray-900 text-sm flex items-center gap-1.5 truncate">
                         <span>{p.students?.name || p.studentName || 'Atleta'}</span>
                         {(p.students?.shirt_number || p.students?.shirtNumber || p.shirt_number || p.shirtNumber) && (

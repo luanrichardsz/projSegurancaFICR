@@ -235,43 +235,29 @@ Deploy Flow:
 | 2 | Cards de 2 personas (Gestor + Responsável) | ✅ Já implementado (`LandingDemo`) | — |
 | 3 | Banner demo com alternador de perfis (2 perfis) | ✅ Já implementado (`DemoBanner`) | — |
 | 4 | Link "Login com Senha" na landing para acesso real | ✅ Já implementado | — |
-| 5 | **Meta tags SEO/OG** para compartilhamento no LinkedIn | ⚠️ Pendente | Alta |
-| 6 | **Favicon e OG Image** para preview rico no LinkedIn | ⚠️ Pendente | Alta |
-| 7 | **Indicador visual "DEMO"** no título da aba | ⚠️ Pendente | Média |
+| 5 | Meta tags SEO/OG para compartilhamento no LinkedIn | ✅ Implementado (`index.html`) | — |
+| 6 | Favicon SVG e OG Image (JPG 16:9) | ✅ Implementado (`public/`) | — |
+| 7 | Indicador visual "DEMO" no título da aba | ✅ Implementado (`DemoTitleUpdater` em `App.tsx`) | — |
 
-### 5.2 Meta Tags para LinkedIn (Open Graph)
+### 5.2 Meta Tags para LinkedIn (Open Graph) — ✅ Implementado
 
-Adicionar no [index.html](file:///home/luandev/Documentos/projSegurancaFICR/baseFc/index.html):
+Adicionado no [index.html](file:///home/luandev/Documentos/projSegurancaFICR/baseFc/index.html):
 
-```html
-<!-- Open Graph (LinkedIn, Facebook, WhatsApp) -->
-<meta property="og:type" content="website" />
-<meta property="og:title" content="Base FC — Gestão Inteligente para Escolinhas de Futebol" />
-<meta property="og:description" content="Sistema completo de gestão esportiva com controle de atletas, turmas, presenças, mensalidades e portal do responsável. Demonstração aberta ao público." />
-<meta property="og:image" content="https://SEU-DOMINIO.vercel.app/og-image.png" />
-<meta property="og:url" content="https://SEU-DOMINIO.vercel.app" />
-<meta property="og:site_name" content="Base FC" />
+- `og:type`, `og:title`, `og:description`, `og:image`, `og:site_name`, `og:locale`
+- `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`
+- Favicon SVG em `public/favicon.svg`
+- OG Image (JPG 16:9) em `public/og-image.jpg`
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Base FC — Gestão de Escolinhas de Futebol" />
-<meta name="twitter:description" content="Acesse a demonstração gratuita e explore o sistema completo." />
-<meta name="twitter:image" content="https://SEU-DOMINIO.vercel.app/og-image.png" />
-```
+> [!NOTE]
+> Após definir o domínio final na Vercel, atualize `og:image` para usar URL absoluta
+> (ex: `https://basefc-demo.vercel.app/og-image.jpg`) para garantir preview correto no LinkedIn.
 
-### 5.3 Título da Aba no Modo Demo
+### 5.3 Título da Aba no Modo Demo — ✅ Implementado
 
-Adicionar um `useEffect` no [Layout.tsx](file:///home/luandev/Documentos/projSegurancaFICR/baseFc/src/components/Layout.tsx) ou no `App.tsx`:
+Componente `DemoTitleUpdater` no [App.tsx](file:///home/luandev/Documentos/projSegurancaFICR/baseFc/src/App.tsx):
 
-```tsx
-useEffect(() => {
-  if (isDemo) {
-    document.title = '🟢 Base FC — Demonstração';
-  } else {
-    document.title = 'Base FC — Gestão Esportiva';
-  }
-}, [isDemo]);
-```
+- Modo demo: `🟢 Base FC — Demo (Gestor)` ou `🟢 Base FC — Demo (Responsável)`
+- Modo real: `Base FC — Gestão Inteligente para Escolinhas de Futebol`
 
 ---
 

@@ -64,6 +64,21 @@ const DashboardRouter = () => {
   return <DashboardGestor />;
 };
 
+const DemoTitleUpdater = () => {
+  const { isDemo, role } = useAuth();
+
+  useEffect(() => {
+    if (isDemo) {
+      const roleName = role === 'RESPONSAVEL' ? 'Responsável' : 'Gestor';
+      document.title = `🟢 Base FC — Demo (${roleName})`;
+    } else {
+      document.title = 'Base FC — Gestão Inteligente para Escolinhas de Futebol';
+    }
+  }, [isDemo, role]);
+
+  return null;
+};
+
 const HomeOrLanding = () => {
   const { user, loading } = useAuth();
 
@@ -88,6 +103,7 @@ export default function App() {
     <AuthProvider>
       <Router>
         <AuthHashHandler />
+        <DemoTitleUpdater />
         <Routes>
           <Route path="/demo" element={<LandingDemo />} />
           <Route path="/login" element={<Login />} />

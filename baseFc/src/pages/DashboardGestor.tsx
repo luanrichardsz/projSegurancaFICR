@@ -192,14 +192,14 @@ const StatCard = ({
 }) => (
   <div 
     onClick={onClick}
-    className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+    className="bg-white rounded-2xl shadow-xs border border-gray-100 p-4 sm:p-5 flex items-center justify-between gap-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
   >
-    <div>
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</p>
-      <h3 className="text-2xl font-black text-gray-900 mt-1">{value}</h3>
-      <p className="text-2xs text-gray-500 mt-0.5">{subtitle}</p>
+    <div className="min-w-0 flex-1">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider truncate">{title}</p>
+      <h3 className="text-xl sm:text-2xl font-black text-gray-900 mt-1 truncate">{value}</h3>
+      <p className="text-2xs text-gray-500 mt-0.5 truncate">{subtitle}</p>
     </div>
-    <div className={`p-3.5 rounded-2xl ${bg}`}>
+    <div className={`p-3 sm:p-3.5 rounded-2xl shrink-0 ${bg}`}>
       {icon}
     </div>
   </div>
