@@ -133,8 +133,8 @@ export const INITIAL_TEACHERS: MockTeacher[] = [
     status: 'ATIVO',
     created_at: '2025-01-10T10:00:00Z',
     classes: [
-      { id: 'demo-cls-2', name: 'Sub-13 Tarde - Campo Principal', category: 'SUB_13' },
-      { id: 'demo-cls-3', name: 'Sub-15 Tarde - Tático e Força', category: 'SUB_15' }
+      { id: 'demo-cls-2', name: 'Sub-13 Tarde - Campo Principal', category: 'Sub-13' },
+      { id: 'demo-cls-3', name: 'Sub-15 Tarde - Tático e Força', category: 'Sub-15' }
     ]
   },
   {
@@ -148,8 +148,8 @@ export const INITIAL_TEACHERS: MockTeacher[] = [
     status: 'ATIVO',
     created_at: '2025-02-01T09:30:00Z',
     classes: [
-      { id: 'demo-cls-1', name: 'Sub-11 Manhã - Campo Society', category: 'SUB_11' },
-      { id: 'demo-cls-4', name: 'Sub-9 Iniciação aos Sábados', category: 'SUB_9' }
+      { id: 'demo-cls-1', name: 'Sub-11 Manhã - Campo Society', category: 'Sub-11' },
+      { id: 'demo-cls-4', name: 'Sub-9 Iniciação aos Sábados', category: 'Sub-9' }
     ]
   },
   {
@@ -171,7 +171,7 @@ export const INITIAL_CLASSES: MockClass[] = [
     id: 'demo-cls-1',
     school_id: 'demo-school-001',
     name: 'Sub-11 Manhã - Campo Society',
-    category: 'SUB_11',
+    category: 'Sub-11',
     days_of_week: ['TER', 'QUI'],
     start_time: '08:00',
     end_time: '09:30',
@@ -186,7 +186,7 @@ export const INITIAL_CLASSES: MockClass[] = [
     id: 'demo-cls-2',
     school_id: 'demo-school-001',
     name: 'Sub-13 Tarde - Campo Principal',
-    category: 'SUB_13',
+    category: 'Sub-13',
     days_of_week: ['SEG', 'QUA', 'SEX'],
     start_time: '15:00',
     end_time: '16:30',
@@ -201,7 +201,7 @@ export const INITIAL_CLASSES: MockClass[] = [
     id: 'demo-cls-3',
     school_id: 'demo-school-001',
     name: 'Sub-15 Tarde - Tático e Força',
-    category: 'SUB_15',
+    category: 'Sub-15',
     days_of_week: ['TER', 'QUI'],
     start_time: '16:30',
     end_time: '18:00',
@@ -216,7 +216,7 @@ export const INITIAL_CLASSES: MockClass[] = [
     id: 'demo-cls-4',
     school_id: 'demo-school-001',
     name: 'Sub-9 Iniciação aos Sábados',
-    category: 'SUB_9',
+    category: 'Sub-9',
     days_of_week: ['SAB'],
     start_time: '08:30',
     end_time: '10:00',
@@ -241,9 +241,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: 'Dipirona e Frutos do Mar',
     medical_restrictions: 'Sem restrições para esforço cardiovascular intenso',
     medications: null,
-    category: 'SUB_13',
-    position: 'Meio-Campo',
-    dominant_foot: 'Destro',
+    category: 'Sub-13',
+    position: 'Meio-campo',
+    dominant_foot: 'DIREITO',
     shirt_number: 10,
     status: 'ATIVO',
     enrolled_at: '2025-01-15T14:30:00Z',
@@ -274,9 +274,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: null,
     medical_restrictions: 'Usa bombinha preventiva antes do treino',
     medications: 'Salbutamol se necessário',
-    category: 'SUB_11',
+    category: 'Sub-11',
     position: 'Atacante',
-    dominant_foot: 'Canhoto',
+    dominant_foot: 'ESQUERDO',
     shirt_number: 7,
     status: 'ATIVO',
     enrolled_at: '2025-02-01T10:15:00Z',
@@ -305,9 +305,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: 'Pólen e poeira',
     medical_restrictions: null,
     medications: null,
-    category: 'SUB_15',
+    category: 'Sub-15',
     position: 'Goleiro',
-    dominant_foot: 'Destro',
+    dominant_foot: 'DIREITO',
     shirt_number: 1,
     status: 'ATIVO',
     enrolled_at: '2025-01-20T11:00:00Z',
@@ -336,9 +336,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: null,
     medical_restrictions: null,
     medications: null,
-    category: 'SUB_11',
+    category: 'Sub-11',
     position: 'Zagueiro',
-    dominant_foot: 'Destro',
+    dominant_foot: 'DIREITO',
     shirt_number: 5,
     status: 'ATIVO',
     enrolled_at: '2025-02-10T16:20:00Z',
@@ -360,9 +360,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: 'Lactose',
     medical_restrictions: null,
     medications: null,
-    category: 'SUB_13',
+    category: 'Sub-13',
     position: 'Volante',
-    dominant_foot: 'Destro',
+    dominant_foot: 'DIREITO',
     shirt_number: 8,
     status: 'ATIVO',
     enrolled_at: '2025-01-25T09:40:00Z',
@@ -384,9 +384,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: null,
     medical_restrictions: null,
     medications: null,
-    category: 'SUB_9',
+    category: 'Sub-9',
     position: 'Atacante',
-    dominant_foot: 'Destro',
+    dominant_foot: 'DIREITO',
     shirt_number: 9,
     status: 'ATIVO',
     enrolled_at: '2025-02-15T15:00:00Z',
@@ -408,9 +408,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: null,
     medical_restrictions: null,
     medications: null,
-    category: 'SUB_13',
+    category: 'Sub-13',
     position: 'Lateral Esquerdo',
-    dominant_foot: 'Canhoto',
+    dominant_foot: 'ESQUERDO',
     shirt_number: 11,
     status: 'ATIVO',
     enrolled_at: '2025-01-18T10:30:00Z',
@@ -432,9 +432,9 @@ export const INITIAL_STUDENTS: MockStudent[] = [
     allergies: null,
     medical_restrictions: 'Em recuperação de lesão leve no joelho direito',
     medications: null,
-    category: 'SUB_15',
+    category: 'Sub-15',
     position: 'Zagueiro',
-    dominant_foot: 'Destro',
+    dominant_foot: 'DIREITO',
     shirt_number: 4,
     status: 'INATIVO',
     enrolled_at: '2024-11-05T14:00:00Z',
@@ -458,7 +458,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     payment_method: 'PIX',
     paid_at: '2026-09-08T15:20:00Z',
     invoice_url: '#',
-    students: { id: 'demo-std-1', name: 'Lucas Souza', category: 'SUB_13', shirt_number: 10, cpf: '11122233344' }
+    students: { id: 'demo-std-1', name: 'Lucas Souza', category: 'Sub-13', shirt_number: 10, cpf: '11122233344' }
   },
   {
     id: 'demo-pay-2',
@@ -470,7 +470,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     payment_method: 'CARTAO_CREDITO',
     paid_at: '2026-09-10T09:45:00Z',
     invoice_url: '#',
-    students: { id: 'demo-std-2', name: 'Gabriel Silva', category: 'SUB_11', shirt_number: 7, cpf: '22233344455' }
+    students: { id: 'demo-std-2', name: 'Gabriel Silva', category: 'Sub-11', shirt_number: 7, cpf: '22233344455' }
   },
   {
     id: 'demo-pay-3',
@@ -479,7 +479,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     due_date: '2026-09-15',
     competence: '09/2026',
     status: 'PENDENTE',
-    students: { id: 'demo-std-3', name: 'Matheus Oliveira', category: 'SUB_15', shirt_number: 1, cpf: '33344455566' }
+    students: { id: 'demo-std-3', name: 'Matheus Oliveira', category: 'Sub-15', shirt_number: 1, cpf: '33344455566' }
   },
   {
     id: 'demo-pay-4',
@@ -488,7 +488,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     due_date: '2026-09-05',
     competence: '09/2026',
     status: 'ATRASADO',
-    students: { id: 'demo-std-4', name: 'Bernardo Santos', category: 'SUB_11', shirt_number: 5, cpf: '44455566677' }
+    students: { id: 'demo-std-4', name: 'Bernardo Santos', category: 'Sub-11', shirt_number: 5, cpf: '44455566677' }
   },
   {
     id: 'demo-pay-5',
@@ -499,7 +499,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     status: 'PAGO',
     payment_method: 'PIX',
     paid_at: '2026-09-09T17:10:00Z',
-    students: { id: 'demo-std-5', name: 'Enzo Ferrari Ferreira', category: 'SUB_13', shirt_number: 8, cpf: '55566677788' }
+    students: { id: 'demo-std-5', name: 'Enzo Ferrari Ferreira', category: 'Sub-13', shirt_number: 8, cpf: '55566677788' }
   },
   {
     id: 'demo-pay-6',
@@ -508,7 +508,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     due_date: '2026-09-20',
     competence: '09/2026',
     status: 'PENDENTE',
-    students: { id: 'demo-std-6', name: 'Arthur Pereira', category: 'SUB_9', shirt_number: 9, cpf: '66677788899' }
+    students: { id: 'demo-std-6', name: 'Arthur Pereira', category: 'Sub-9', shirt_number: 9, cpf: '66677788899' }
   },
   {
     id: 'demo-pay-7',
@@ -517,7 +517,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     due_date: '2026-09-05',
     competence: '09/2026',
     status: 'ATRASADO',
-    students: { id: 'demo-std-7', name: 'Davi Lucca Ribeiro', category: 'SUB_13', shirt_number: 11, cpf: '77788899900' }
+    students: { id: 'demo-std-7', name: 'Davi Lucca Ribeiro', category: 'Sub-13', shirt_number: 11, cpf: '77788899900' }
   },
   {
     id: 'demo-pay-8',
@@ -528,7 +528,7 @@ export const INITIAL_PAYMENTS: MockPayment[] = [
     status: 'PAGO',
     payment_method: 'PIX',
     paid_at: '2026-08-09T11:00:00Z',
-    students: { id: 'demo-std-1', name: 'Lucas Souza', category: 'SUB_13', shirt_number: 10, cpf: '11122233344' }
+    students: { id: 'demo-std-1', name: 'Lucas Souza', category: 'Sub-13', shirt_number: 10, cpf: '11122233344' }
   }
 ];
 
@@ -577,7 +577,7 @@ export const INITIAL_AUDIT_LOGS: MockAuditLog[] = [
     user_role: 'GESTOR',
     action: 'CADASTRAR_ALUNO',
     resource: 'Aluno: Lucas Souza (Sub-13)',
-    details: { studentId: 'demo-std-1', category: 'SUB_13', shirtNumber: 10 },
+    details: { studentId: 'demo-std-1', category: 'Sub-13', shirtNumber: 10 },
     timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
     ip_address: '189.45.120.33'
   },

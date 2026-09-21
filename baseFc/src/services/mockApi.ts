@@ -4,7 +4,7 @@ import {
 } from './mockData.ts';
 
 const DEMO_STORAGE_KEY = 'basefc_demo_session';
-const DEMO_DATA_KEY = 'basefc_demo_data_v1';
+const DEMO_DATA_KEY = 'basefc_demo_data_v2';
 
 interface DemoDataStore {
   students: MockStudent[];
@@ -279,14 +279,38 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
 
     const payments = store.payments.filter(p => p.student_id === student.id);
 
-    return {
+    const studentAtt = store.attendance.filter(a => a.student_id === student.id);
+    const totalTrainings = studentAtt.length > 0 ? studentAtt.length : 12;
+    const presences = studentAtt.length > 0 ? studentAtt.filter(a => a.status === 'PRESENTE').length : 11;
+    const absences = studentAtt.length > 0 ? studentAtt.filter(a => a.status === 'AUSENTE').length : 1;
+    const justified = studentAtt.length > 0 ? studentAtt.filter(a => a.status === 'JUSTIFICADO').length : 0;
+    const attendanceRate = totalTrainings > 0 ? Math.round((presences / totalTrainings) * 100) : 92;
+
+    const studentData = {
       ...student,
       dominantFoot: student.dominant_foot,
+      dominant_foot: student.dominant_foot,
       shirtNumber: student.shirt_number,
+      shirt_number: student.shirt_number,
+      medicalRestrictions: student.medical_restrictions,
+      medical_restrictions: student.medical_restrictions
+    };
+
+    return {
+      student: studentData,
+      ...studentData,
       guardians,
       emergencyContacts,
       classes: enrolledClasses,
-      payments
+      payments,
+      attendance: {
+        totalTrainings,
+        presences,
+        absences,
+        justified,
+        attendanceRate,
+        history: studentAtt
+      }
     };
   }
 
@@ -323,17 +347,27 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       const updated: MockStudent = {
         ...existing,
         name: body.name !== undefined ? body.name : existing.name,
+        cpf: body.cpf !== undefined ? body.cpf : existing.cpf,
         dob: body.dob !== undefined ? body.dob : existing.dob,
         phone: body.phone !== undefined ? body.phone : existing.phone,
         address: body.address !== undefined ? body.address : existing.address,
         allergies: body.allergies !== undefined ? body.allergies : existing.allergies,
-        medical_restrictions: body.medicalRestrictions !== undefined ? body.medicalRestrictions : existing.medical_restrictions,
+        medical_restrictions: body.medicalRestrictions !== undefined ? body.medicalRestrictions : (body.medical_restrictions !== undefined ? body.medical_restrictions : existing.medical_restrictions),
         medications: body.medications !== undefined ? body.medications : existing.medications,
         category: body.category !== undefined ? body.category : existing.category,
         position: body.position !== undefined ? body.position : existing.position,
-        dominant_foot: body.dominantFoot !== undefined ? body.dominantFoot : existing.dominant_foot,
-        shirt_number: body.shirtNumber !== undefined ? Number(body.shirtNumber) : existing.shirt_number,
+        dominant_foot: body.dominantFoot !== undefined ? body.dominantFoot : (body.dominant_foot !== undefined ? body.dominant_foot : existing.dominant_foot),
+        shirt_number: body.shirtNumber !== undefined ? Number(body.shirtNumber) : (body.shirt_number !== undefined ? Number(body.shirt_number) : existing.shirt_number),
         status: body.status !== undefined ? body.status : existing.status,
+        guardian: body.guardian ? {
+          ...(existing.guardian || { name: '', phone: '' }),
+          ...body.guardian,
+          id: existing.guardian?.id || 'demo-grd-1'
+        } : existing.guardian,
+        emergencyContact: body.emergencyContact ? {
+          ...(existing.emergencyContact || { name: '', phone: '', relationship: 'Familiar' }),
+          ...body.emergencyContact
+        } : existing.emergencyContact
       };
 
       store.students[index] = updated;
