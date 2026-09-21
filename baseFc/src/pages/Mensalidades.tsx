@@ -251,7 +251,11 @@ export const Mensalidades = () => {
         studentCpf.includes(searchTerm);
 
       const matchesStatus = statusFilter === 'TODOS' || p.status === statusFilter;
-      const matchesMonth = monthFilter === 'TODOS' || String(p.reference_month) === monthFilter;
+      const pMonth = p.reference_month ?? (
+        p.competence ? parseInt(p.competence.split('/')[0], 10) :
+        (p.due_date ? parseInt(p.due_date.slice(5, 7), 10) : null)
+      );
+      const matchesMonth = monthFilter === 'TODOS' || String(pMonth) === monthFilter;
 
       return matchesSearch && matchesStatus && matchesMonth;
     });

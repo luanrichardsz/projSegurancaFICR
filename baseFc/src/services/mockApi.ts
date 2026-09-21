@@ -937,8 +937,13 @@ export async function handleMockRequest(endpoint: string, options: RequestInit =
       let list = store.payments.map(p => {
         const student = store.students.find(s => s.id === p.student_id);
         const isOverdue = p.status === 'PENDENTE' && p.due_date < today;
+        const [compMonth, compYear] = (p.competence || '').split('/').map(Number);
+        const refMonth = compMonth || (p.due_date ? parseInt(p.due_date.slice(5, 7), 10) : 1);
+        const refYear = compYear || (p.due_date ? parseInt(p.due_date.slice(0, 4), 10) : 2026);
         return {
           ...p,
+          reference_month: refMonth,
+          reference_year: refYear,
           status: isOverdue ? ('ATRASADO' as const) : p.status,
           students: student ? {
             id: student.id,
