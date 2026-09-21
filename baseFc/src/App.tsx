@@ -70,7 +70,7 @@ const DemoTitleUpdater = () => {
   useEffect(() => {
     if (isDemo) {
       const roleName = role === 'RESPONSAVEL' ? 'Responsável' : 'Gestor';
-      document.title = `🟢 Base FC — Demo (${roleName})`;
+      document.title = `Base FC — Demo (${roleName})`;
     } else {
       document.title = 'Base FC — Gestão Inteligente para Escolinhas de Futebol';
     }
