@@ -210,7 +210,7 @@ export const INITIAL_CLASSES: MockClass[] = [
     status: 'ATIVO',
     teacher_id: 'demo-tch-1',
     teachers: { id: 'demo-tch-1', name: 'Prof. Roberto Costa' },
-    studentIds: ['demo-std-3', 'demo-std-8']
+    studentIds: ['demo-std-3']
   },
   {
     id: 'demo-cls-4',
