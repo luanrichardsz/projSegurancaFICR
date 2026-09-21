@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { useNavigate } from 'react-router-dom';
-import { Shield, Mail, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Shield, Mail, CheckCircle2, AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import { supabase } from '../services/supabase.ts';
 
 export const Login = () => {
@@ -77,6 +77,23 @@ export const Login = () => {
           <p className="text-xs text-gray-500 mt-1">Acesso seguro ao portal da escolinha</p>
         </div>
 
+        {/* Banner de Demonstração */}
+        <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 mb-6 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-900 mb-1">
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span>Acesso Rápido para Avaliação</span>
+          </div>
+          <p className="text-2xs text-emerald-700 mb-3">
+            Deseja testar o sistema sem precisar digitar e-mail e senha?
+          </p>
+          <Link
+            to="/demo"
+            className="inline-flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs transition-colors shadow-sm cursor-pointer"
+          >
+            <span>Acessar Modo Demonstração</span>
+          </Link>
+        </div>
+
         {error && (
           <div className="bg-rose-50 text-rose-700 p-4 rounded-xl text-xs mb-6 border border-rose-200">
             {error}
@@ -140,8 +157,12 @@ export const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-100 text-center text-2xs text-gray-400">
-          Base FC • Sistema Acadêmico & Esportivo Integrado
+        <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col items-center gap-2 text-center text-2xs text-gray-400">
+          <Link to="/" className="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 cursor-pointer">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Voltar para a Página Inicial</span>
+          </Link>
+          <span>Base FC • Sistema Acadêmico & Esportivo Integrado</span>
         </div>
       </div>
 

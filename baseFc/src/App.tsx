@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { Layout } from './components/Layout.tsx';
 import { Login } from './pages/Login.tsx';
 import { DefinirSenha } from './pages/DefinirSenha.tsx';
+import { LandingDemo } from './pages/LandingDemo.tsx';
 import { DashboardGestor } from './pages/DashboardGestor.tsx';
 import { DashboardResponsavel } from './pages/DashboardResponsavel.tsx';
 import { ListAlunos } from './pages/ListAlunos.tsx';
@@ -34,19 +35,19 @@ const AuthHashHandler = () => {
   return null;
 };
 
-const PrivateRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
+const PrivateRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
   const { user, role, loading } = useAuth();
   
   if (loading) {
     return (
       <div className="min-h-screen bg-[#112F20] flex flex-col items-center justify-center text-white">
         <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-sm font-medium tracking-wide">Validando credenciais seguras...</p>
+        <p className="text-sm font-medium tracking-wide">Validando credenciais de acesso...</p>
       </div>
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     return <Navigate to="/" replace />;
@@ -63,16 +64,36 @@ const DashboardRouter = () => {
   return <DashboardGestor />;
 };
 
+const HomeOrLanding = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#112F20] flex flex-col items-center justify-center text-white">
+        <div className="w-10 h-10 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-sm font-medium tracking-wide">Iniciando Base FC...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LandingDemo />;
+  }
+
+  return <Layout />;
+};
+
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <AuthHashHandler />
         <Routes>
+          <Route path="/demo" element={<LandingDemo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/definir-senha" element={<DefinirSenha />} />
           
-          <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route path="/" element={<HomeOrLanding />}>
             <Route index element={<DashboardRouter />} />
             <Route 
               path="alunos" 
