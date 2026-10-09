@@ -6,7 +6,8 @@ import {
   Phone, AlertTriangle, CheckCircle2, XCircle, Clock, Mail,
   Send, Copy, Check
 } from 'lucide-react';
-import { maskCPF, maskPhone } from '../utils/masks.ts';
+import { maskPhone } from '../utils/masks.ts';
+import { MaskedCPF } from './MaskedCPF.tsx';
 
 interface Props {
   studentId: string;
@@ -131,7 +132,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <InfoBox label="Data de Nascimento" value={student.dob || 'Não informada'} />
-                <InfoBox label="CPF do Atleta" value={student.cpf && student.cpf !== '00000000000' ? maskCPF(student.cpf) : 'Não informado'} />
+                <InfoBox label="CPF do Atleta" value={<MaskedCPF value={student.cpf} />} />
                 <InfoBox label="Categoria" value={student.category} />
                 <InfoBox label="Posição em Campo" value={student.position} />
                 <InfoBox label="Pé Dominante" value={student.dominantFoot || student.dominant_foot || 'Não informado'} />
@@ -177,7 +178,7 @@ export const StudentProfileModal = ({ studentId, onClose }: Props) => {
                           )}
                         </div>
                         <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                          <div>CPF: {g.cpf ? maskCPF(g.cpf) : 'Não informado'}</div>
+                          <div>CPF: <MaskedCPF value={g.cpf} /></div>
                           {g.email ? (
                             <div className="flex items-center text-gray-700 font-medium break-all">
                               <Mail className="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" />
@@ -399,7 +400,7 @@ const TabButton = ({ active, onClick, icon, label }: { active: boolean; onClick:
   </button>
 );
 
-const InfoBox = ({ label, value }: { label: string; value: string | number }) => (
+const InfoBox = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
     <div className="text-xs font-semibold text-gray-500 uppercase">{label}</div>
     <div className="text-sm font-bold text-gray-900 mt-1">{value}</div>

@@ -6,7 +6,7 @@ import {
   AlertTriangle, Clock, ShieldCheck, DollarSign, X, AlertCircle, FileText,
   Trash2
 } from 'lucide-react';
-import { maskCPF } from '../utils/masks.ts';
+import { MaskedCPF } from '../components/MaskedCPF.tsx';
 
 interface Payment {
   id: string;
@@ -532,7 +532,7 @@ export const Mensalidades = () => {
                           )}
                         </div>
                         <div className="text-2xs text-gray-500">
-                          {p.students?.category || p.category || 'Geral'} • CPF: {p.students?.cpf && p.students.cpf !== '00000000000' ? maskCPF(p.students.cpf) : 'Não informado'}
+                          {p.students?.category || p.category || 'Geral'} • CPF: <MaskedCPF value={p.students?.cpf} />
                         </div>
                       </td>
                       <td className="px-6 py-4 text-xs font-bold text-gray-700">

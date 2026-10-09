@@ -8,7 +8,8 @@ import {
   ExternalLink, Sparkles, UserPlus, Shield, Check, Info, Edit3,
   Trash2
 } from 'lucide-react';
-import { maskPhone, maskCPF } from '../utils/masks.ts';
+import { maskPhone } from '../utils/masks.ts';
+import { MaskedCPF } from '../components/MaskedCPF.tsx';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
 import { EditStudentModal } from '../components/EditStudentModal.tsx';
 
@@ -1099,7 +1100,7 @@ export const Turmas = () => {
                           {/* Rodapé do Card: Acesso à Ficha 360° Completa */}
                           <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
                             <span className="text-3xs text-gray-400">
-                              CPF: {aluno.cpf && aluno.cpf !== '00000000000' ? maskCPF(aluno.cpf) : 'Não informado'}
+                              CPF: <MaskedCPF value={aluno.cpf} />
                             </span>
 
                             <div className="flex items-center gap-2">
