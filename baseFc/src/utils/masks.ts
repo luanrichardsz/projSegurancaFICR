@@ -26,6 +26,12 @@ export const maskCPF = (value: string | null | undefined): string => {
 };
 
 /**
+ * Oculta totalmente o CPF (Data Masking): ***.***.***-**
+ */
+export const redactCPF = (_value?: string | null): string => '***.***.***-**';
+
+
+/**
  * Aplica máscara de Telefone celular ou fixo:
  * 11 dígitos: (00) 00000-0000
  * 10 dígitos: (00) 0000-0000

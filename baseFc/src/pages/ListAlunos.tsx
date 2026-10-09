@@ -3,7 +3,7 @@ import { fetchApi } from '../services/api.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { Users, Search, UserPlus, FileText, CheckCircle2, XCircle, ShieldAlert, Filter, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { maskCPF } from '../utils/masks.ts';
+import { MaskedCPF } from '../components/MaskedCPF.tsx';
 import { StudentProfileModal } from '../components/StudentProfileModal.tsx';
 import { EditStudentModal } from '../components/EditStudentModal.tsx';
 
@@ -219,7 +219,7 @@ export const ListAlunos = () => {
                       <div className="min-w-0">
                         <h4 className="font-bold text-gray-900 text-sm truncate">{aluno.name}</h4>
                         <p className="text-2xs text-gray-500">
-                          CPF: {aluno.cpf && aluno.cpf !== '00000000000' ? maskCPF(aluno.cpf) : 'Não informado'}
+                          CPF: <MaskedCPF value={aluno.cpf} />
                         </p>
                       </div>
                     </div>
@@ -314,7 +314,7 @@ export const ListAlunos = () => {
                           <div>
                             <div className="font-semibold text-gray-900">{aluno.name}</div>
                             <div className="text-xs text-gray-500">
-                              CPF: {aluno.cpf && aluno.cpf !== '00000000000' ? maskCPF(aluno.cpf) : 'Não informado'}
+                              CPF: <MaskedCPF value={aluno.cpf} />
                             </div>
                           </div>
                         </div>

@@ -12,6 +12,8 @@ Garantimos que apenas usuários autorizados tenham acesso aos dados.
 - **Proteção IDOR (Insecure Direct Object Reference)**: O middleware `checkStudentAccess` (`src/backend/middlewares/idor.middleware.ts`) intercepta requisições parametrizadas (ex: `GET /api/students/:id`). Ele consulta o PostgreSQL no Supabase para certificar que o registro pertence à mesma escola do Gestor, à turma do Professor ou ao filho do Responsável solicitante, devolvendo `HTTP 403` em qualquer divergência.
 - **Row Level Security (RLS)**: Todas as tabelas no Supabase possuem RLS ativado (`ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`). O acesso direto do cliente é restrito ao próprio perfil, enquanto o Backend atua como barreira com chave segura de serviço (`service_role`).
 - **Isolamento de Segredos**: A `SUPABASE_SERVICE_ROLE_KEY` nunca é exposta no frontend, permanecendo exclusiva das variáveis de ambiente do backend.
+- **Criptografia em Repouso (Data at Rest)**: O banco PostgreSQL gerenciado pelo Supabase (hospedado na AWS) armazena os dados em volumes criptografados com **AES-256**, assim como os backups. Se os arquivos físicos forem copiados do servidor, só serão obtidos dados ilegíveis sem a chave de descriptografia, que é gerenciada pelo provedor. Em trânsito, toda comunicação usa TLS (HTTPS).
+- **Mascaramento de Dados (Data Masking)**: O CPF de alunos e responsáveis é exibido oculto (`***.***.***-**`) em todas as telas (listagem de alunos, turmas, mensalidades e perfil do aluno). O componente `MaskedCPF` (`src/components/MaskedCPF.tsx`) oferece um ícone de olho para revelar o valor sob demanda, item a item, reduzindo a exposição acidental (ex.: _shoulder surfing_, capturas de tela).
 
 ---
 
