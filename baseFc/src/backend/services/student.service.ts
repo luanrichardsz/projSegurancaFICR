@@ -83,7 +83,7 @@ export class StudentService {
               process.env.VITE_APP_URL || 
               (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
               process.env.RENDER_EXTERNAL_URL ||
-              (process.env.NODE_ENV === 'production' ? 'https://basefc.onrender.com' : 'http://localhost:5173');
+              (process.env.NODE_ENV === 'production' ? 'https://https-basefc-onrender-com.onrender.com/' : 'http://localhost:5173');
 
             const appUrl = rawAppUrl.replace(/\/+$/, '');
             const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
@@ -702,7 +702,7 @@ export class StudentService {
       process.env.VITE_APP_URL || 
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
       process.env.RENDER_EXTERNAL_URL ||
-      (process.env.NODE_ENV === 'production' ? 'https://basefc.onrender.com' : 'http://localhost:5173');
+      (process.env.NODE_ENV === 'production' ? 'https://https-basefc-onrender-com.onrender.com/' : 'http://localhost:5173');
 
     const appUrl = rawAppUrl.replace(/\/+$/, '');
     const redirectTo = `${appUrl}/definir-senha`;
